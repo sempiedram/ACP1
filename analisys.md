@@ -350,3 +350,35 @@ After preprocessing, if the category is found to be arithmetic operation, then t
 
 2. The string is now properly preprocessed, and it can be passed on to the evaluating method.
 
+# Evaluating operation - Commands:
+
+When a command is passed (such as '#exit'), do the following:
+
+1. Remove first character (that should be a '#').
+2. Find command. This is done reading the string until a space is found or the end of the string is found. The command is the substring from the beginning to that point (without the space).
+3. Remove command name.
+4. Try to recognize command name. If it is recognized, execute the respective method, passing the string as arguments. If it is not recognized, print a message saying so.
+5. Done.
+
+# Evaluating operation - Arithmetic:
+
+This is done after all preprocessing.
+
+Steps:
+
+1. Check that the string for errors.
+    1.1. Check validity of characters:
+        All characters must be one of Arithmetic category characters.
+    1.2. There must be exactly one Arithmetic category result base indicator ('=').
+    1.3. There must be at least a non-space valid character before the Arithmetic category result base indicator.
+    1.4. All characters after the Arithmetic category result base indicator must be one of Variable names + Space
+    1.5. There must be an equal quantity of opening '(' and closing ')' parenthesis. Can be checked by counting from zero adding one every time a '(' is found and subtracting one every time a ')' is found.
+    
+2. Find result base indicator.
+    This is done walking through the string until an Arithmetic category result base indicator is found, then the rest of the string is stripped of spaces, and treated as the result base.
+
+2.1. Check that the result base found is valid.
+
+3. Remove the result base indicator portion.
+    Example: '4 + 5 = dec' to '4 + 5'
+
