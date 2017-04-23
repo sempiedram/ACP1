@@ -523,12 +523,38 @@ Tokens have the following information:
 3. Type, information about what is this token. Stored as a byte.
     Possible types:
         a. UNKNOWN, value 0
+			This is the default type of a token.
         b. WORD, value 1
+			All NUMBER tokens and VARIABLE tokens are also WORD tokens.
+			These tokens are made of the characters:
+				Digits + Variable names
+				= "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
         c. NUMBER, value 2
+			All NUMBER tokens are also WORD tokens.
+			These tokens are made of the characters:
+				Digits + Base identifiers
+				= "0123456789ABCDEFbcdehinotx"
         d. VARIABLE, value 3
+			All VARIABLE tokens are also WORD tokens.
+			These tokens are made of the characters:
+				Variable names
+				= "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
         e. OPEN_PARENTHESIS, value 4
+			This token is simply the string "(".
         f. CLOSE_PARENTHESIS, value 5
+			This token is simply the string ")".
         g. OPERATION, value 6
+			These tokens are made of the characters:
+				Arithmetic operations
+				= "+-*/"
+		h. BASE_INDICATOR, value 7
+			This token is simply the character Arithmetic category result base indicator.
+		i. COMPLEMENT_INDICATOR, value 8
+			This token is simply the character Complement category indicator.
+		j. COMMAND_INDICATOR, value 9
+			This token is simply the character Command category indicator.
+		k. VARIABLE_INDICATOR, value 9
+			This token is simply the character Varible definition category indicator.
 4. Extra byte A, a single byte that can be used to store extra information. The information stored here depends upon the type of the token:
     a. For UNKNOWN, it's meaningless.
     b. For WORD, it's meaningless.
@@ -537,5 +563,55 @@ Tokens have the following information:
     e. For OPEN_PARENTHESIS, it's meaningless.
     f. For CLOSE_PARENTHESIS, it's meaningless.
     g. For OPERATION, it's the operation id: 0 for +, 1 for -, 2 for *, 3 for /.
+	h. BASE_INDICATOR, it's meaningless.
+	i. COMPLEMENT_INDICATOR, it's meaningless.
+	j. COMMAND_INDICATOR, it's meaningless.
+	k. VARIABLE_INDICATOR, it's meaningless.
 5. String, "original" string source. Ends with a 0.
 6. Numerical value, four bytes to store the numerical value of the token. These four bytes only have meaning if type is NUMBER.
+
+# Token classification
+
+Examples of the token types:
+	a. UNKNOWN
+		Any string fits into this category.
+	b. WORD
+		3020dex
+		varA
+		GIWJJI
+		200
+		0
+		a
+	c. NUMBER
+		12920dec
+		AB192Bhex
+		0
+		BABE
+	d. VARIABLE
+		force
+		x
+		pointX
+		generateAllVariables
+	e. OPEN_PARENTHESIS
+		(
+	f. CLOSE_PARENTHESIS
+		)
+	g. OPERATION
+		+
+		-
+		*
+		/
+	h. BASE_INDICATOR
+		dec
+		bin
+		hex
+		oct
+	i. COMPLEMENT_INDICATOR
+		~
+	j. COMMAND_INDICATOR
+		#
+	k. VARIABLE_INDICATOR
+		:
+
+
+
