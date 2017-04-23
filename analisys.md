@@ -382,3 +382,160 @@ Steps:
 3. Remove the result base indicator portion.
     Example: '4 + 5 = dec' to '4 + 5'
 
+# Arithmetic operation examples
+Operation: "    3020dex + 23-1101bin*((varA) + 33oct)-1=   oct      "
+    a. Preprocessing:
+        a.a. Insert spaces:
+            "    3020dex  +  23 - 1101bin *  (  ( varA )   +  33oct )  - 1 =    oct      "
+        a.b. Remove repeated spaces:
+            " 3020dex + 23 - 1101bin * ( ( varA ) + 33oct ) - 1 = oct "
+        a.c. Remove beginning and end spaces:
+            "3020dex + 23 - 1101bin * ( ( varA ) + 33oct ) - 1 = oct"
+        a.d. Add implicit base:
+            "3020dex + 23dec - 1101bin * ( ( varA ) + 33oct ) - 1dec = oct"
+    b. Check that the string for errors:
+        "3020dex + 23dec - 1101bin * ( ( varA ) + 33oct ) - 1dec = oct"
+        b.a. Check validity of characters
+            All characters are one of Arithmetic category characters
+                ("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/= ")
+        b.b. There must be exactly one Arithmetic category result base indicator
+            There is only one '='
+        b.c. There must be at least a non-space valid character before the Arithmetic category result base indicator.
+            There is at least one: '3' (the first character)
+        b.d. All characters after the Arithmetic category result base indicator must be one of Variable names + Space
+            They are: all characters in " oct" are in Variable names + Space ("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ").
+        b.e. There must be an equal quantity of opening '(' and closing ')' parenthesis.
+            There are:
+
+            count = 0
+
+            "3020dex + 23dec - 1101bin * ( ( varA ) + 33oct ) - 1dec = oct"
+                                         ^ count++
+            count = 1
+
+            "3020dex + 23dec - 1101bin * ( ( varA ) + 33oct ) - 1dec = oct"
+                                           ^ count++
+            count = 2
+
+            "3020dex + 23dec - 1101bin * ( ( varA ) + 33oct ) - 1dec = oct"
+                                                  ^ count--
+            count = 1
+
+            "3020dex + 23dec - 1101bin * ( ( varA ) + 33oct ) - 1dec = oct"
+                                                            ^ count--
+            count = 0
+
+            "3020dex + 23dec - 1101bin * ( ( varA ) + 33oct ) - 1dec = oct"
+                                                                          ^ End.
+
+            The final count was 0, therefore, there is a balanced number of parenthesis.
+
+    c. Find result base indicator.
+        "3020dex + 23dec - 1101bin * ( ( varA ) + 33oct ) - 1dec = oct"
+                                                                 ^- Result base indicator
+        " oct" <- Rest of string
+        "oct" <- Rest of string stripped of spaces.
+        Result base: "oct", is valid.
+
+    d. Tokenization
+        a. First approach:
+            a. Find limit.
+				Scan character by character until the first space or the end of the string. Save that position.
+			b. Copy string.
+				Copy from the beginning of the string to the position of the space (or end of string).
+			c. Classify string.
+				
+            
+        b. Second approach:
+            a. Separate by spaces:
+                ["3020dex", "+", "23dec", "-", "1101bin", "*", "(", "(", "varA", ")", "+", "33oct", ")", "-", "1dec"]
+
+            b. Classify tokens as WORDs, OPERATIONs, OPEN_PARENTHESIS, CLOSE_PARENTHESIS:
+                [WORD:"3020dex", OPERATION:"+", WORD:"23dec", OPERATION:"-", WORD:"1101bin", OPERATION:"*", OPEN_PARENTHESIS:"(", OPEN_PARENTHESIS:"(", WORD:"varA", CLOSE_PARENTHESIS:")", OPERATION:"+", WORD:"33oct", CLOSE_PARENTHESIS:")", OPERATION:"-", WORD:"1dec"]
+
+            c. Process all WORD tokens and detect if they are NUMBER or VARIABLE:
+                [WORD:"3020dex", WORD:"23dec", WORD:"1101bin", WORD:"varA", WORD:"33oct", WORD:"1dec"]
+                => [NUMBER:"3020dex", NUMBER:"23dec", NUMBER:"1101bin", VARIABLE:"varA", NUMBER:"33oct", NUMBER:"1dec"]
+                
+    e. Checking of tokens.
+        [NUMBER:"3020dex", OPERATION:"+", NUMBER:"23dec", OPERATION:"-", NUMBER:"1101bin", OPERATION:"*", OPEN_PARENTHESIS:"(", OPEN_PARENTHESIS:"(", VARIABLE:"varA", CLOSE_PARENTHESIS:")", OPERATION:"+", NUMBER:"33oct", CLOSE_PARENTHESIS:")", OPERATION:"-", NUMBER:"1dec"]
+
+        We check token order in the first level taking things grouped by parenthesis, and variables as numbers.
+        The order should be: NUMBER, (OPERATION, NUMBER)*
+        (Where asterisk means zero or more of that pattern)
+
+        Examples of valid expressions:
+            "3 + (...) / 2" = NUMBER OPERATION NUMBER OPERATION NUMBER
+            "99209" = NUMBER
+            "57 - 2" = NUMBER OPERATION NUMBER
+
+        TODO: Properly handle number signs:
+            "6 * -2" and "5 * +1" should both be NUMBER OPERATION NUMBER,
+                not NUMBER OPERATION OPERATION NUMBER
+
+            This can be done by checking if there are operations next to each other, and then checking if the operation to the left of the number is '+' or '-', applying that sign to the number, and then deleting the token.
+
+        If the expression is not valid, end the process.
+
+        Then check recursively expressions inside parenthesis in the same way.
+
+    f. Evaluation of tokens
+        If there are parenthesis expressions, evaluate them first recursively.
+
+        If there are no parenthesis, find the higher precedence operation from left to right, evaluate that operation, substitute the operation and the operands by the result, and recursively evaluate the expression until there is just only a number.
+
+        When only a number is left, return, and substitute upper level parenthesis expressions.
+
+        Repeat until there is only a single number left, that's the result.
+
+    g. Done.
+
+
+# Data structures
+
+## Expressions
+
+An expression is a list of tokens. Expressions live inside the expression space, in memory.
+
+The expression space is a piece of memory that is reserved in the data segment; it's size is, for now, 4096 bytes (a big enough number of bytes).
+
+There is only one real expression, and multiple or zero sub-expressions (that are delimited by parenthesis tokens).
+
+Expression space limits are handled by two pointers, exp_space_begin and exp_space_end. If they are equal, the expression space is empty. If not, there must be at least a single token inside it. But this is only to know if there is tokens inside it. Tokens should not be accessed through pointers, but with identifiers (ID's).
+
+There should be some methods to manipulate the expression space, tokens, and sub-expressions, for example:
+    a. Clear expression space.
+        Turns every bit between exp_space_begin and exp_space_end to 0. Makes exp_space_end take the value of exp_space_begin (indicating that the expression space is empty).
+    b. Push a token.
+        Takes the token in token space, and puts it in the address pointed to by exp_space_end.
+        Moves exp_space_end to the end of the new token.
+    c. Delete a token.
+        Given the ID of a token, the token is searched. If it is found, it is zeroed.
+    d. Reformat expression space.
+        Move tokens as close to each other as possible, and manipulate exp_space_end accordingly.
+
+## Tokens
+
+A token is a piece of an expression. Tokens are constructed in tokens_space.
+Tokens have the following information:
+
+1. ID, a number identifying every token. Stored as two bytes. Starts from 0.
+3. Type, information about what is this token. Stored as a byte.
+    Possible types:
+        a. UNKNOWN, value 0
+        b. WORD, value 1
+        c. NUMBER, value 2
+        d. VARIABLE, value 3
+        e. OPEN_PARENTHESIS, value 4
+        f. CLOSE_PARENTHESIS, value 5
+        g. OPERATION, value 6
+4. Extra byte A, a single byte that can be used to store extra information. The information stored here depends upon the type of the token:
+    a. For UNKNOWN, it's meaningless.
+    b. For WORD, it's meaningless.
+    c. For NUMBER, it's the original base: 2, 8, 10, or 16, and any other value is meaningless.
+    d. For VARIABLE, it's meaningless.
+    e. For OPEN_PARENTHESIS, it's meaningless.
+    f. For CLOSE_PARENTHESIS, it's meaningless.
+    g. For OPERATION, it's the operation id: 0 for +, 1 for -, 2 for *, 3 for /.
+5. String, "original" string source. Ends with a 0.
+6. Numerical value, four bytes to store the numerical value of the token. These four bytes only have meaning if type is NUMBER.
