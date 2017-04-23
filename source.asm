@@ -128,6 +128,36 @@ process_input:
 		PutInt AX
 	pop AX
 	nwln
+    
+    cmp byte [category], CATEGORY_ARITHMETIC
+    je .category_arithmetic
+    
+    cmp byte [category], CATEGORY_COMMAND
+    je .category_command
+    
+    cmp byte [category], CATEGORY_COMPLEMENT
+    je .category_complement
+    
+    cmp byte [category], CATEGORY_VARIABLE
+    je .category_variable
+    
+    .category_arithmetic:
+        ;call process_arithmetic
+        jmp .end
+    
+    .category_command:
+        ;call process_command
+        jmp .end
+    
+    .category_complement:
+        ;call process_complement
+        jmp .end
+    
+    .category_variable:
+        ;call process_variable
+        jmp .end
+    
+    .end:
 	
 	ret
 
