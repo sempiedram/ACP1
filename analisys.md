@@ -284,7 +284,7 @@ The steps to follow are:
 			+ Digits
 			+ Base identifiers
 			+ Space
-			= "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ*/~= :#"
+			= "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ*/~ "
 			TODO: Decide if expressions can be passed to complement mode.
 		o. Open parenthesis: "("
 		p. Close parenthesis: ")"
@@ -522,7 +522,7 @@ A token is a piece of an expression. Tokens are constructed in tokens_space.
 Tokens have the following information:
 
 1. ID, a number identifying every token. Stored as two bytes. Starts from 0.
-3. Type, information about what is this token. Stored as a byte.
+2. Type, information about what is this token. Stored as a byte.
     Possible types:
         a. UNKNOWN, value 0
 			This is the default type of a token.
@@ -562,7 +562,7 @@ Tokens have the following information:
 			This token is simply the character Command category indicator.
 		l. VARIABLE_INDICATOR, value 11
 			This token is simply the character Varible definition category indicator.
-4. Extra byte A, a single byte that can be used to store extra information. The information stored here depends upon the type of the token:
+3. Extra byte, a single byte that can be used to store extra information. The information stored here depends upon the type of the token:
     a. For UNKNOWN, it's meaningless.
     b. For WORD, it's meaningless.
     c. For NUMBER, it's the original base: 2, 8, 10, or 16, and any other value is meaningless.
@@ -571,12 +571,14 @@ Tokens have the following information:
     f. For OPEN_PARENTHESIS, it's meaningless.
     g. For CLOSE_PARENTHESIS, it's meaningless.
     h. For OPERATION, it's the operation id: 0 for +, 1 for -, 2 for *, 3 for /.
-	i. BASE_INDICATOR, it's meaningless.
-	j. COMPLEMENT_INDICATOR, it's meaningless.
-	k. COMMAND_INDICATOR, it's meaningless.
-	l. VARIABLE_INDICATOR, it's meaningless.
+	i. For BASE_INDICATOR, it's meaningless.
+	j. For COMPLEMENT_INDICATOR, it's meaningless.
+	k. For COMMAND_INDICATOR, it's meaningless.
+	l. For VARIABLE_INDICATOR, it's meaningless.
+4. Numerical value, four bytes to store the numerical value of the token. These four bytes only have meaning if type is NUMBER.
 5. String, "original" string source. Ends with a 0.
-6. Numerical value, four bytes to store the numerical value of the token. These four bytes only have meaning if type is NUMBER.
+
+Full format: IITEVVVVS... (I:ID, T:Type, VVVV:Value, S:Token string).
 
 # Token classification
 
@@ -594,6 +596,13 @@ This is an algorithm on how to classify tokens:
 2. Check string composition:
 	At this point, the token type is either UNKNOWN, WORD, NUMBER, or VARIABLE.
 	Starting with UNKNOWN, the type is reduced by checking every character.
+	1. Check if it only has base identifier characters ("bcdehinotx").
+		If it's a valid base identifier (bin, oct, dec, hex), return.
+		If it's a defined variable, return.
+		Else, return UNKNOWN.
+	2. Check if it has decimal digits, if it does, it should be a number.
+	3. It should be a variable. If it isn't, this must be stored somewhere.
+	
 
 ## Examples of the token types:
 	a. UNKNOWN
