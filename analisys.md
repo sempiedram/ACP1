@@ -242,7 +242,7 @@ The steps to follow are:
 1. Check for invalid characters:
 
 	Only the following characters are valid:
-		All characters: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/~= :#"
+		All characters: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/~= :#()"
 
 	These characters are divided in the following categories:
 		a. Digits: "0123456789ABCDEF"
@@ -286,6 +286,8 @@ The steps to follow are:
 			+ Space
 			= "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ*/~= :#"
 			TODO: Decide if expressions can be passed to complement mode.
+		o. Open parenthesis: "("
+		p. Close parenthesis: ")"
 2. Check first character.
 	2.1. Is it '#':
 		Category is command.
@@ -539,40 +541,61 @@ Tokens have the following information:
 			These tokens are made of the characters:
 				Variable names
 				= "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        e. OPEN_PARENTHESIS, value 4
+		e. BASE_IDENTIFIER, value 4
+			All BASE_IDENTIFIER are also valid WORD tokens, and VARIABLE tokens.
+			These tokens are made of the characters:
+				 Base identifiers
+				= "bcdehinotx"
+        f. OPEN_PARENTHESIS, value 5
 			This token is simply the string "(".
-        f. CLOSE_PARENTHESIS, value 5
+        g. CLOSE_PARENTHESIS, value 6
 			This token is simply the string ")".
-        g. OPERATION, value 6
+        h. OPERATION, value 7
 			These tokens are made of the characters:
 				Arithmetic operations
 				= "+-*/"
-		h. BASE_INDICATOR, value 7
+		i. BASE_INDICATOR, value 8
 			This token is simply the character Arithmetic category result base indicator.
-		i. COMPLEMENT_INDICATOR, value 8
+		j. COMPLEMENT_INDICATOR, value 9
 			This token is simply the character Complement category indicator.
-		j. COMMAND_INDICATOR, value 9
+		k. COMMAND_INDICATOR, value 10
 			This token is simply the character Command category indicator.
-		k. VARIABLE_INDICATOR, value 9
+		l. VARIABLE_INDICATOR, value 11
 			This token is simply the character Varible definition category indicator.
 4. Extra byte A, a single byte that can be used to store extra information. The information stored here depends upon the type of the token:
     a. For UNKNOWN, it's meaningless.
     b. For WORD, it's meaningless.
     c. For NUMBER, it's the original base: 2, 8, 10, or 16, and any other value is meaningless.
     d. For VARIABLE, it's meaningless.
-    e. For OPEN_PARENTHESIS, it's meaningless.
-    f. For CLOSE_PARENTHESIS, it's meaningless.
-    g. For OPERATION, it's the operation id: 0 for +, 1 for -, 2 for *, 3 for /.
-	h. BASE_INDICATOR, it's meaningless.
-	i. COMPLEMENT_INDICATOR, it's meaningless.
-	j. COMMAND_INDICATOR, it's meaningless.
-	k. VARIABLE_INDICATOR, it's meaningless.
+    e. For BASE_IDENTIFIER, it's the base value: 2, 8, 10, or 16, any other value is meaningless.
+    f. For OPEN_PARENTHESIS, it's meaningless.
+    g. For CLOSE_PARENTHESIS, it's meaningless.
+    h. For OPERATION, it's the operation id: 0 for +, 1 for -, 2 for *, 3 for /.
+	i. BASE_INDICATOR, it's meaningless.
+	j. COMPLEMENT_INDICATOR, it's meaningless.
+	k. COMMAND_INDICATOR, it's meaningless.
+	l. VARIABLE_INDICATOR, it's meaningless.
 5. String, "original" string source. Ends with a 0.
 6. Numerical value, four bytes to store the numerical value of the token. These four bytes only have meaning if type is NUMBER.
 
 # Token classification
 
-Examples of the token types:
+This is an algorithm on how to classify tokens:
+0. Is the string lenght 0?
+	Return UNKNOWN
+1. Is the string of length 1?
+	Check for one of the following:
+		Open parenthesis -> OPEN_PARENTHESIS
+		Close parenthesis -> CLOSE_PARENTHESIS
+		Arithmetic category result base indicator -> BASE_INDICATOR
+		Complement category indicator -> COMPLEMENT_INDICATOR
+		Command category indicator -> COMMAND_INDICATOR
+		Varible definition category indicator -> VARIABLE_INDICATOR
+2. Check string composition:
+	At this point, the token type is either UNKNOWN, WORD, NUMBER, or VARIABLE.
+	Starting with UNKNOWN, the type is reduced by checking every character.
+
+## Examples of the token types:
 	a. UNKNOWN
 		Any string fits into this category.
 	b. WORD
@@ -592,25 +615,27 @@ Examples of the token types:
 		x
 		pointX
 		generateAllVariables
-	e. OPEN_PARENTHESIS
-		(
-	f. CLOSE_PARENTHESIS
-		)
-	g. OPERATION
-		+
-		-
-		*
-		/
-	h. BASE_INDICATOR
+	e. BASE_IDENTIFIER
 		dec
 		bin
 		hex
 		oct
-	i. COMPLEMENT_INDICATOR
+	f. OPEN_PARENTHESIS
+		(
+	g. CLOSE_PARENTHESIS
+		)
+	h. OPERATION
+		+
+		-
+		*
+		/
+	i. BASE_INDICATOR
+		=
+	j. COMPLEMENT_INDICATOR
 		~
-	j. COMMAND_INDICATOR
+	k. COMMAND_INDICATOR
 		#
-	k. VARIABLE_INDICATOR
+	l. VARIABLE_INDICATOR
 		:
 
 
