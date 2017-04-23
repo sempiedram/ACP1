@@ -108,7 +108,7 @@ preprocess:
 	call preprocess_remove_repeated_spaces
 	
 	; Strip end and beginning spaces:
-	;call strip_user_input
+	call strip_user_input
     ret
 
 
@@ -223,6 +223,107 @@ preprocess_remove_repeated_spaces:
     popf
     ret
 
+
+strip_user_input:
+    call strip_beginning_user_input
+    call strip_end_user_input
+    ret
+
+
+strip_beginning_user_input:
+    pushad
+        ; Find the first non-space:
+        
+        ; Start at user_input.
+        mov EAX, user_input
+        
+        ; Put in EBX the user_input string end.
+        mov EBX, user_input
+        add EBX, INPUT_LIMIT
+        
+        .space:
+            ; Stop at first non-space:
+            cmp byte [EAX], SPACE_CHAR
+            jne .not_space
+            
+            ; Stop at the string end:
+            cmp EAX, EBX
+            jae .end_of_string
+            
+            inc EAX
+            jmp .space
+        
+        .end_of_string:
+            mov EAX, user_input
+        
+        .not_space:
+        mov EBX, EAX
+        mov EAX, user_input
+        
+        ; EBX is now pointing to the first non-space character in user_input
+        ;   or to the beginning of the string.
+        
+        ; Put in EBX the user_input string end.
+        mov ECX, user_input
+        add ECX, INPUT_LIMIT
+        
+        .shift_chars:
+            ; Stop at the end of the string.
+            cmp EAX, ECX
+            jae .out_of_string
+            
+            ; It's inside the string.
+            
+            ; Check current character in EAX.
+            cmp byte [EAX], 0
+            je .done_shifting
+            
+            ; Move a byte from EBX to EAX
+            mov DL, byte [EBX]
+            mov byte [EAX], DL
+            
+            inc EAX
+            inc EBX
+            jmp .shift_chars
+        
+        .out_of_string:
+        .done_shifting:
+            ; Done.
+    popad
+    ret
+
+; 
+strip_end_user_input:
+    pushad
+        mov EAX, user_input
+        .scan_string_end:
+            cmp byte [EAX], 0
+            je .at_end
+            inc EAX
+            jmp .scan_string_end
+        
+        .at_end:
+            dec EAX
+            
+        .substitute_spaces:
+            ; Stop at beginning of string.
+            cmp EAX, user_input
+            jb .before_start_of_string
+            
+            ; Stop at first non space.
+            cmp byte [EAX], SPACE_CHAR
+            jne .not_space
+            
+            ; Substitute space with a zero.
+            mov byte [EAX], 0
+            dec EAX
+            jmp .substitute_spaces
+        
+        .before_start_of_string:
+        .not_space:
+            ; Trailing spaces have been replaced.
+    popad
+    ret
 
 ; This method tests the character at BL to see if spaces should be inserted around it.
 ; Affects: CF, 0 if not, 1 if yes
