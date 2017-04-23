@@ -238,60 +238,105 @@ Examples:
 Before evaluating the operation, it must be known what is being asked to be done. This is done *after preprocessing*.
 
 The steps to follow are:
-    1. Check for invalid characters:
-        Only the following characters are valid:
-            All characters: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/~= :#"
 
-        These characters are divided in the following categories:
-            a. Digits: "0123456789ABCDEF"
-                Only decimal digits and uppercase letters up to 'F' are valid digits.
-            b. Base identifiers: "bcdehinotx"
-                The union of the sets "bin", "oct", "dec", and "hex".
-            c. Variable names: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                Only letters can be used for variable names.
-            d. Arithmetic operations: "+-*/"
-            e. Arithmetic category result base indicator: "="
-            f. Space: " "
-            g. Complement category indicator: "~"
-            h. Command category indicator: "#"
-            i. Varible definition category indicator: ":"
-            j. Arithmetic expression characters:
-                  Arithmetic operations
-                + Digits
-                + Base identifiers
-                + Variable names
-                + Space
-                = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/ "
-            k. Arithmetic category characters:
-                  Arithmetic expression characters
-                + Arithmetic category result base indicator
-                = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/= "
-            l. Command category characters:
-                All characters
-                = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/~= :#"
-                Note: Arguments to commands can contain any character (TODO: probably should include all valid ascii characters).
-            m. Varible definition characters:
-                  Arithmetic expression
-                + Varible definition category indicator
-                + Variable names
-                = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/ :"
-                TODO: Decide if expressions can be passed to variable definition mode.
-            n. Complement category characters:
-                  Complement category indicator
-                + Variable names
-                + Digits
-                + Base identifiers
-                + Space
-                = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ*/~= :#"
-                TODO: Decide if expressions can be passed to complement mode.
-    2. Check first character.
-        2.1. Is it '#':
-            Category is command.
-        2.2. Is it '~':
-            Category is two's complement.
-        2.3. It's not one of those:
-            Category must be arithmetic or variable definition.
+1. Check for invalid characters:
 
-            2.3.1. Look for ':' (variable definition category indicator)
-                If found, category is variable definition.
-                Else, category is arithmetic operation.
+	Only the following characters are valid:
+		All characters: 
+		
+		"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/~= :#"
+
+	These characters are divided in the following categories:
+		a. Digits: "0123456789ABCDEF"
+			Only decimal digits and uppercase letters up to 'F' are valid digits.
+		b. Base identifiers: "bcdehinotx"
+			The union of the sets "bin", "oct", "dec", and "hex".
+		c. Variable names: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+			Only letters can be used for variable names.
+		d. Arithmetic operations: "+-*/"
+		e. Arithmetic category result base indicator: "="
+		f. Space: " "
+		g. Complement category indicator: "~"
+		h. Command category indicator: "#"
+		i. Varible definition category indicator: ":"
+		j. Arithmetic expression characters:
+			  Arithmetic operations
+			+ Digits
+			+ Base identifiers
+			+ Variable names
+			+ Space
+			= "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/ "
+		k. Arithmetic category characters:
+			  Arithmetic expression characters
+			+ Arithmetic category result base indicator
+			= "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/= "
+		l. Command category characters:
+			All characters
+			= "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/~= :#"
+			Note: Arguments to commands can contain any character (TODO: probably should include all valid ascii characters).
+		m. Varible definition characters:
+			  Arithmetic expression
+			+ Varible definition category indicator
+			+ Variable names
+			= "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/ :"
+			TODO: Decide if expressions can be passed to variable definition mode.
+		n. Complement category characters:
+			  Complement category indicator
+			+ Variable names
+			+ Digits
+			+ Base identifiers
+			+ Space
+			= "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ*/~= :#"
+			TODO: Decide if expressions can be passed to complement mode.
+2. Check first character.
+	2.1. Is it '#':
+		Category is command.
+	2.2. Is it '~':
+		Category is two's complement.
+	2.3. It's not one of those:
+		Category must be arithmetic or variable definition.
+
+		2.3.1. Look for ':' (variable definition category indicator)
+			If found, category is variable definition.
+			Else, category is arithmetic operation.
+
+# Input preprocessing:
+
+Before the actual processing of arithmetic input, preprocessing should be done to homogenize input.
+
+1. **Insert necessary spaces.** This can be done by inserting two spaces to either side of any operation symbol, or parenthesis, even if they already have spaces around them. Exceptions are: '#' (command indicator).
+
+    Examples:
+
+    	'4+5' to '4 + 5'
+    	'4+2-2' to '4 + 2 - 2'
+    	'4--2' to '4 -  - 2'
+    	'5 + (5 - 2)' to '5  +   ( 5  -  2 ) '
+    	'5dec+(8-1)=bin' to '5dec +  ( 8 - 1 )  = bin'
+
+2. **Strip repeated spaces.** This can be done reading all characters of the string one by one, adding a space when one is found and ignoring all other spaces. Anything that is not a space is added.
+
+    Examples:
+
+        '4 + 5' to '4 + 5'
+        '5  +   ( 5  -  2 ) ' to '5 + ( 5 - 2 ) '
+        '5dec +  ( 8 - 1 )  = bin' to '5dec + ( 8 - 1 ) = bin'
+
+3. **Strip beginning and end spaces.** The string is scanned until a character that is not a space is found, then all characters are added until the end of the string is reached. After stripping the beginning spaces, the end spaces are stripped by walking through the characters backward, starting from the end of the string, until a non-space character is found.
+
+    Examples:
+
+        '5 + ( 5 - 2 ) ' to '5 + ( 5 - 2 )'
+        '   3dec * 7oct   ' to '3dec * 7oct'
+
+4. **Add implicit base.** This is done checking every number to see if they have a base sufix. If they don't, dec is added.
+
+    This should not be done if the operation category is command.
+
+    Examples:
+
+        '4' to '4dec'
+        '5oct + 4' to '5oct + 4dec'
+
+5. **End.** The string is now properly preprocessed, and it can be passed on to the evaluating method.
+
