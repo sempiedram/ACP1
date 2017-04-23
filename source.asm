@@ -36,41 +36,41 @@
 
 .DATA
 	; This is the string used as prompt for the next operation:
-		cmd_prompt: db "::> ", 0
+		cmd_prompt db "::> ", 0
 	
 	; Strings for messages:
 		; This string is showed at the end of the program execution:
-		finish_msg: db "Bye!", 0
+		finish_msg db "Bye!", 0
 		
 		; Strings for the processing method:
-		processing_op: db "Processing: '", 0
-		processing_op2: db "'.", 0
+		processing_op db "Processing: '", 0
+		processing_op2 db "'.", 0
 		
 		; Strings for the preprocessing method:
-		preprocessed_msg: db "Preprocessed: '", 0
-		preprocessed_msg2: db "'.", 0
+		preprocessed_msg db "Preprocessed: '", 0
+		preprocessed_msg2 db "'.", 0
 	
 	; This is the string space for user input
-		user_input: times INPUT_LIMIT db 0
-		user_input_swap: times INPUT_LIMIT db 0
+		user_input times INPUT_LIMIT db 0
+		user_input_swap times INPUT_LIMIT db 0
 	
 	; This byte is either 0, or 1. 0 means that the program should stop, and 1 that it should continue. It's checked every cycle to see if the program should stop.
-		running: db 0
+		running db 0
 	
 	; This byte is used to check if there was an error (0 means no error):
-		error_code: db 0
+		error_code db 0
 	
 	; This byte holds the category computed by the check_category method:
-		category: db 0
+		category db 0
 
     ; Commands (that start with #) recognized:
-		CMD_EXIT: db "exit", 0
-		CMD_VARS: db "vars", 0
-		CMD_ABOUT: db "about", 0
+		CMD_EXIT db "exit", 0
+		CMD_VARS db "vars", 0
+		CMD_ABOUT db "about", 0
 	
 	; Sets of characters:
 		; Characters that are expanded with spaces:
-		spaces_chars: db "+-*/()=:", 0
+		spaces_chars db "+-*/()=:", 0
 
 
 ; Main method:
