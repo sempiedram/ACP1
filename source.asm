@@ -58,10 +58,16 @@
 		category_name_complement db "complement", 0
 		category_name_variable db "variable definition", 0
 		category_name_invalid db "invalid", 0
-		
-	; This is the string space for user input
+	
+	; String memory spaces:
+		; This is the string space for user input
 		user_input times INPUT_LIMIT db 0
+		; user_input_swap is a space used for performing operations over user_input
 		user_input_swap times INPUT_LIMIT db 0
+		
+		; Strings for general use:
+		string_a times STRING_SIZE db 0
+		string_b times STRING_SIZE db 0
 	
 	; This byte is either 0, or 1. 0 means that the program should stop, and 1 that it should continue. It's checked every cycle to see if the program should stop.
 		running db 0
@@ -180,6 +186,100 @@ preprocess:
 	call strip_user_input
     ret
 
+
+; This method generates tokens from user_input and populates expression_space with them.
+tokenize:
+    call clone_user_input
+    
+    pushad
+        ; 1. Find delimiter space or end of string
+        mov EAX, user_input
+        
+        ; EBX contains the limit of user_input
+        mov EBX, user_input
+        add EBX, INPUT_LIMIT
+        
+        .cycle_space:
+            ; Stop if reached the end of user_input
+            cmp EAX, EBX
+            ja .end_of_string
+        
+            ; Stop at first space:
+            cmp byte [EAX], SPACE_CHAR
+            je .is_space
+            
+            ; Stop at the end of the string:
+            cmp byte [EAX], 0
+            je .end_of_string
+            
+            ; Do next cycle:
+            inc EAX
+            jmp .cycle_space
+        
+        .is_space:
+        .end_of_string:
+            ; Copy word end into EBX for copy_to_token to use it.
+            mov EBX, EAX
+        
+        ; 2.1 Copy token string to string_a
+        
+        mov EAX, user_input
+        call copy_to_token
+        
+        ; 2.2 Remove that part of the string from the user_input
+        
+        call cut_up_to
+        
+        ; 3. Find token category
+		
+		; call check_token_category
+		
+        ; 4. Generate token in token_space
+        ; 5. Copy new token into expression_space
+    popad
+    ret
+
+
+; This method copies the string from the address EAX up to EBX, to token_space
+copy_to_token:
+    pushad
+        ; EDX keeps the address of where to copy the next byte.
+        mov EDX, token_space
+        
+        .cycle:
+            ; Stop when reached the EBX address
+            cmp EAX, EBX
+            jae .done
+            
+            ; Move a byte from EAX to token_space
+            mov CL, byte [EAX]
+            mov byte [EDX], CL
+            
+            inc EAX
+            jmp .cycle
+            
+        .done:
+            ; Close the string at token_space
+            mov byte [EDX], 0
+    popad
+    ret
+
+; Removes from the string in address EAX the characters up to EBX, and moves the rest of the string accordingly.
+cut_up_to:
+    push EBX
+        .cycle:
+            ; Stop just when above EBX
+            cmp EAX, EBX
+            ja .done
+            
+            ; Remove the first character of the string at EAX
+            call remove_first_character
+            
+            dec EBX
+            jmp .cycle
+        .done:
+    pop EBX
+    ret
 
 ; This method is used to process user_input is a command.
 process_command:
