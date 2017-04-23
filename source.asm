@@ -105,7 +105,7 @@ preprocess:
 	call preprocess_insert_spaces
 	
 	; Remove repeated strings:
-	;call preprocess_remove_repeated_spaces
+	call preprocess_remove_repeated_spaces
 	
 	; Strip end and beginning spaces:
 	;call strip_user_input
@@ -175,6 +175,52 @@ preprocess_insert_spaces:
     
     call restore_user_input
     
+    ret
+
+
+; Removes repeated spaces in user_input.
+preprocess_remove_repeated_spaces:
+    pushf
+    pushad
+		; This section copies user_input onto user_input_swap removing spaces:
+        mov AL, 0
+        mov EBX, user_input
+        mov ECX, user_input_swap
+
+        .cycle:
+            mov AH, byte [EBX]
+            
+            cmp AH, 0
+            jne .inside_string
+                mov byte [ECX], 0
+                jmp .end
+            .inside_string:
+            
+            cmp AH, SPACE_CHAR
+            je .was_space
+                mov byte [ECX], AH
+                inc ECX
+                mov AL, 0
+                jmp .after
+            .was_space:
+                cmp AL, 1
+                mov AL, 1
+                je .previous_was_space
+                    mov byte [ECX], AH
+                    inc ECX
+                    jmp .after
+                .previous_was_space:
+            .after:
+            
+            inc EBX
+            jmp .cycle
+        
+        .end:
+        
+    ; This section copies the result from user_input_swap onto user_input:
+        call restore_user_input
+    popad
+    popf
     ret
 
 
