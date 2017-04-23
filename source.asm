@@ -5,19 +5,38 @@
 
 ; equ definitions:
 	; This (minus one) is the size limit for the user_input string:
-    INPUT_LIMIT equ 1024
+		INPUT_LIMIT equ 1024
 	
 	; Characters:
 		; Space character:
 		SPACE_CHAR equ ' '
-	
+
+		; Command indicator character:
+		COMMAND_CHAR equ '#'
+
+		; Complement indicator character:
+		COMPLEMENT_CHAR equ '~'
+
+		; Variable definition indicator character:
+		VARIABLE_DEF_CHAR equ ':'
+
+		; Result base indicator character:
+		RESULT_BASE_INDICATOR_CHAR equ '='
+
 	; Error codes:
 		USER_INPUT_SWAP_NO_SPACE equ 1
+	
+	; Categories' values:
+		CATEGORY_ARITHMETIC equ 1
+		CATEGORY_COMMAND equ 2
+		CATEGORY_COMPLEMENT equ 4
+		CATEGORY_VARIABLE equ 8
+		CATEGORY_INVALID equ 16
 
 
 .DATA
 	; This is the string used as prompt for the next operation:
-    cmd_prompt: db "::> ", 0
+		cmd_prompt: db "::> ", 0
 	
 	; Strings for messages:
 		; This string is showed at the end of the program execution:
@@ -32,19 +51,22 @@
 		preprocessed_msg2: db "'.", 0
 	
 	; This is the string space for user input
-    user_input: times INPUT_LIMIT db 0
-    user_input_swap: times INPUT_LIMIT db 0
+		user_input: times INPUT_LIMIT db 0
+		user_input_swap: times INPUT_LIMIT db 0
 	
 	; This byte is either 0, or 1. 0 means that the program should stop, and 1 that it should continue. It's checked every cycle to see if the program should stop.
-    running: db 0
+		running: db 0
 	
 	; This byte is used to check if there was an error (0 means no error):
-    error_code: db 0
+		error_code: db 0
+	
+	; This byte holds the category computed by the check_category method:
+		category: db 0
 
     ; Commands (that start with #) recognized:
-    CMD_EXIT: db "exit", 0
-    CMD_VARS: db "vars", 0
-    CMD_ABOUT: db "about", 0
+		CMD_EXIT: db "exit", 0
+		CMD_VARS: db "vars", 0
+		CMD_ABOUT: db "about", 0
 	
 	; Sets of characters:
 		; Characters that are expanded with spaces:
@@ -96,6 +118,17 @@ process_input:
     PutStr preprocessed_msg2
     nwln
 	
+	; Compute category:
+    call check_category
+	
+	; Print category:
+	push AX
+		xor AX, AX
+		mov AL, byte [category]
+		PutInt AX
+	pop AX
+	nwln
+	
 	ret
 
 
@@ -111,6 +144,82 @@ preprocess:
 	call strip_user_input
     ret
 
+
+check_category:
+    pushad
+        mov AL, byte [user_input]
+        
+        cmp AL, COMMAND_CHAR
+        je .is_command
+        
+        cmp AL, COMPLEMENT_CHAR
+        je .is_complement
+        
+        jmp .second_fase
+        
+        .is_command:
+            mov byte [category], CATEGORY_COMMAND
+            jmp .end
+        
+        .is_complement:
+            mov byte [category], CATEGORY_COMPLEMENT
+            jmp .end
+            
+        .second_fase:
+            ; Up to this point, it's either CATEGORY_ARITHMETIC or CATEGORY_VARIABLE
+            
+            mov BL, VARIABLE_DEF_CHAR
+            mov ECX, user_input
+            call find_character
+            jc .is_variable_definition
+            
+            mov BL, RESULT_BASE_INDICATOR_CHAR
+            call find_character
+            jc .is_arithmetic
+            
+            ; By default, unrecognized categories will be treated as CATEGORY_ARITHMETIC
+            
+            mov byte [category], CATEGORY_ARITHMETIC
+            jmp .end
+            
+        .is_variable_definition:
+            mov byte [category], CATEGORY_VARIABLE
+            jmp .end
+        
+        .is_arithmetic:
+            mov byte [category], CATEGORY_ARITHMETIC
+            jmp .end
+        
+        .end:
+    popad
+    ret
+
+; This method determines whether the character in BL is in the string at ECX.
+; Affects: CF, 1 if it was, 0 if it wasn't
+; Inputs: BL character to look for, ECX address of the string.
+find_character:
+    push ECX
+        .cycle:
+            cmp byte [ECX], BL
+            je .found
+            
+            cmp byte [ECX], 0
+            je .end_of_string
+            
+            inc ECX
+            jmp .cycle
+            
+        .end_of_string:
+            clc
+            jmp .end
+            
+        .found:
+            stc
+            jmp .end
+        
+        .end:
+    pop ECX
+    ret
 
 ; This method introduces spaces around characters which return true when tested with space_test_character; this is intended to be used for operations, for example '+++' expands to ' +  +  + '.
 preprocess_insert_spaces:
