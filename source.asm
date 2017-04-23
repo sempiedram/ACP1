@@ -50,6 +50,15 @@
 		preprocessed_msg db "Preprocessed: '", 0
 		preprocessed_msg2 db "'.", 0
 	
+		; String for categories:
+		category_info db "Operation category: ", 0
+		; Category names:
+		category_name_arithmetic db "arithmetic", 0
+		category_name_command db "command", 0
+		category_name_complement db "complement", 0
+		category_name_variable db "variable definition", 0
+		category_name_invalid db "invalid", 0
+		
 	; This is the string space for user input
 		user_input times INPUT_LIMIT db 0
 		user_input_swap times INPUT_LIMIT db 0
@@ -122,11 +131,8 @@ process_input:
     call check_category
 	
 	; Print category:
-	push AX
-		xor AX, AX
-		mov AL, byte [category]
-		PutInt AX
-	pop AX
+	PutStr category_info
+	call print_category_name
 	nwln
     
     cmp byte [category], CATEGORY_ARITHMETIC
@@ -180,7 +186,8 @@ process_command:
     push EAX
         mov EAX, user_input
         call remove_first_character
-        PutStr user_input
+		
+        ; PutStr user_input
         nwln
 		
         ; call tokenize
@@ -264,6 +271,43 @@ check_category:
         .end:
     popad
     ret
+
+; This method prints the category's name depending on the value of the category variable.
+print_category_name:
+	cmp byte [category], CATEGORY_ARITHMETIC
+    je .process_category_arithmetic
+    
+    cmp byte [category], CATEGORY_COMMAND
+    je .process_category_command
+    
+    cmp byte [category], CATEGORY_COMPLEMENT
+    je .process_category_complement
+    
+    cmp byte [category], CATEGORY_VARIABLE
+    je .process_category_variable
+	
+	; No category:
+	PutStr category_name_invalid
+	jmp .end
+    
+    .process_category_arithmetic:
+        PutStr category_name_arithmetic
+        jmp .end
+    
+    .process_category_command:
+        PutStr category_name_command
+        jmp .end
+    
+    .process_category_complement:
+        PutStr category_name_complement
+        jmp .end
+    
+    .process_category_variable:
+        PutStr category_name_variable
+        jmp .end
+    
+    .end:
+	ret
 
 ; This method determines whether the character in BL is in the string at ECX.
 ; Affects: CF, 1 if it was, 0 if it wasn't
