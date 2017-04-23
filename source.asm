@@ -22,6 +22,10 @@
 
 		; Result base indicator character:
 		RESULT_BASE_INDICATOR_CHAR equ '='
+		
+		; Parenthesis characters:
+		OPEN_PARENTHESIS equ '('
+		CLOSE_PARENTHESIS equ ')'
 
 	; Error codes:
 		USER_INPUT_SWAP_NO_SPACE equ 1
@@ -32,6 +36,20 @@
 		CATEGORY_COMPLEMENT equ 4
 		CATEGORY_VARIABLE equ 8
 		CATEGORY_INVALID equ 16
+	
+	; Token types:
+		TOKEN_UNKNOWN equ 0
+		TOKEN_WORD equ 1
+		TOKEN_NUMBER equ 2
+		TOKEN_VARIABLE equ 3
+		TOKEN_BASE_IDENTIFIER equ 4
+		TOKEN_OPEN_PARENTHESIS equ 5
+		TOKEN_CLOSE_PARENTHESIS equ 6
+		TOKEN_TOKEN_OPERATION equ 7
+		TOKEN_BASE_INDICATOR equ 8
+		TOKEN_COMPLEMENT_INDICATOR equ 9
+		TOKEN_COMMAND_INDICATOR equ 10
+		TOKEN_VARIABLE_INDICATOR equ 11
 
 
 .DATA
@@ -84,9 +102,30 @@
 		CMD_ABOUT db "about", 0
 	
 	; Sets of characters:
+	; These sets can be used to classify strings.
 		; Characters that are expanded with spaces:
 		spaces_chars db "+-*/()=:", 0
+		
+		; Characters for variable names:
+		variable_names_chars db "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 0
+		
+		; Valid digit characters:
+		digits_chars db "0123456789ABCDEF", 0
+		
+		; Base indentifier characters:
+		base_identifier_chars db "bcdehinotx", 0
 
+		; Characters for arithmetic expressions:
+		arithmetic_expression_chars db "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/ ", 0
+		
+		; Arithmetic category characters:
+		arithmetic_category_chars db "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/= ", 0
+		
+		; Characters for variable definition operations:
+		variable_definition_chars db "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/: ", 0
+
+		; Complement category characters:
+		complement_chars db "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-~ ", 0
 
 ; Main method:
 .CODE
@@ -230,14 +269,58 @@ tokenize:
         
         call cut_up_to
         
-        ; 3. Find token category
+        ; 3. Find token category of string in string_a
 		
-		; call check_token_category
+		call check_token_category
 		
         ; 4. Generate token in token_space
         ; 5. Copy new token into expression_space
     popad
     ret
+
+
+; This method checks the string_a and returns the token type in the ECX register.
+check_token_category:
+	push EBX
+		call get_string_length
+		
+		cmp EBX, 0
+		jne .non_empty_string
+			; Return UNKNOWN
+			mov ECX, TOKEN_UNKNOWN
+			jmp .end
+		.non_empty_string:
+			cmp EBX, 1
+			jne .multiple_characters
+				; It's a single character. Check the character:
+				cmp byte [OPEN_PA], 
+			.multiple_characters
+				; Check character set of string_a
+		.end:
+	pop EBX
+	ret
+
+
+; This method counts the characters in the string pointed at by the EAX. Return the result in the EBX register.
+get_string_length:
+	push EAX
+		; Start with EBX to 0
+		xor EBX, EBX
+		.cycle:
+			; Stop at the first 0
+			cmp byte [EAX], 0
+			je .done
+			
+			; Increase the count
+			inc EBX
+			
+			; Point to the next byte
+			inc EAX
+			jmp .cycle
+		
+		.done:
+	pop EAX
+	ret
 
 
 ; This method copies the string from the address EAX up to EBX, to token_space
