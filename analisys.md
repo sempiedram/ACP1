@@ -233,3 +233,65 @@ Examples:
         @ Error:
             No value to process.
 
+# Checking category:
+
+Before evaluating the operation, it must be known what is being asked to be done. This is done *after preprocessing*.
+
+The steps to follow are:
+    1. Check for invalid characters:
+        Only the following characters are valid:
+            All characters: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/~= :#"
+
+        These characters are divided in the following categories:
+            a. Digits: "0123456789ABCDEF"
+                Only decimal digits and uppercase letters up to 'F' are valid digits.
+            b. Base identifiers: "bcdehinotx"
+                The union of the sets "bin", "oct", "dec", and "hex".
+            c. Variable names: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                Only letters can be used for variable names.
+            d. Arithmetic operations: "+-*/"
+            e. Arithmetic category result base indicator: "="
+            f. Space: " "
+            g. Complement category indicator: "~"
+            h. Command category indicator: "#"
+            i. Varible definition category indicator: ":"
+            j. Arithmetic expression characters:
+                  Arithmetic operations
+                + Digits
+                + Base identifiers
+                + Variable names
+                + Space
+                = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/ "
+            k. Arithmetic category characters:
+                  Arithmetic expression characters
+                + Arithmetic category result base indicator
+                = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/= "
+            l. Command category characters:
+                All characters
+                = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/~= :#"
+                Note: Arguments to commands can contain any character (TODO: probably should include all valid ascii characters).
+            m. Varible definition characters:
+                  Arithmetic expression
+                + Varible definition category indicator
+                + Variable names
+                = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/ :"
+                TODO: Decide if expressions can be passed to variable definition mode.
+            n. Complement category characters:
+                  Complement category indicator
+                + Variable names
+                + Digits
+                + Base identifiers
+                + Space
+                = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ*/~= :#"
+                TODO: Decide if expressions can be passed to complement mode.
+    2. Check first character.
+        2.1. Is it '#':
+            Category is command.
+        2.2. Is it '~':
+            Category is two's complement.
+        2.3. It's not one of those:
+            Category must be arithmetic or variable definition.
+
+            2.3.1. Look for ':' (variable definition category indicator)
+                If found, category is variable definition.
+                Else, category is arithmetic operation.
