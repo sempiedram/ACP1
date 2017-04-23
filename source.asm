@@ -6,27 +6,52 @@
 ; equ definitions:
 	; This (minus one) is the size limit for the user_input string:
     INPUT_LIMIT equ 1024
+	
+	; Characters:
+		; Space character:
+		SPACE_CHAR equ ' '
+	
+	; Error codes:
+		USER_INPUT_SWAP_NO_SPACE equ 1
 
 
 .DATA
 	; This is the string used as prompt for the next operation:
     cmd_prompt: db "::> ", 0
 	
-	; This string is showed at the end of the program execution:
-    finish_msg: db "Bye!", 0
+	; Strings for messages:
+		; This string is showed at the end of the program execution:
+		finish_msg: db "Bye!", 0
+		
+		; Strings for the processing method:
+		processing_op: db "Processing: '", 0
+		processing_op2: db "'.", 0
+		
+		; Strings for the preprocessing method:
+		preprocessed_msg: db "Preprocessed: '", 0
+		preprocessed_msg2: db "'.", 0
 	
 	; This is the string space for user input
     user_input: times INPUT_LIMIT db 0
+    user_input_swap: times INPUT_LIMIT db 0
 	
 	; This byte is either 0, or 1. 0 means that the program should stop, and 1 that it should continue. It's checked every cycle to see if the program should stop.
     running: db 0
+	
+	; This byte is used to check if there was an error (0 means no error):
+    error_code: db 0
 
     ; Commands (that start with #) recognized:
     CMD_EXIT: db "exit", 0
     CMD_VARS: db "vars", 0
     CMD_ABOUT: db "about", 0
+	
+	; Sets of characters:
+		; Characters that are expanded with spaces:
+		spaces_chars: db "+-*/()=:", 0
 
 
+; Main method:
 .CODE
     .STARTUP
 		; This is the main cycle of:
@@ -57,24 +82,211 @@
 
 ; This method processes the user_input string.
 process_input:
-	push EDI
-	push ESI
-		mov EDI, user_input
-		mov ESI, CMD_EXIT
-		call compare_strings
-		
-		jne .strings_not_equal
-			PutCh 'e'
-			jmp .done
-		.strings_not_equal:
-			PutCh 'n'
-			jmp .done
-		
-		.done:
-			PutCh '-'
-	pop ESI
-	pop EDI
+    ; Print "Processing: '<user_input>'"
+    PutStr processing_op
+    PutStr user_input
+    PutStr processing_op2
+    nwln
+	
+	call preprocess
+    
+    ; Print "Preprocessed: '<user_input preprocessed>'"
+    PutStr preprocessed_msg
+    PutStr user_input
+    PutStr preprocessed_msg2
+    nwln
+	
 	ret
+
+
+; This method preprocesses user_input string.
+preprocess:
+	; Insert extra spaces:
+	call preprocess_insert_spaces
+	
+	; Remove repeated strings:
+	;call preprocess_remove_repeated_spaces
+	
+	; Strip end and beginning spaces:
+	;call strip_user_input
+    ret
+
+
+; This method introduces spaces around characters which return true when tested with space_test_character; this is intended to be used for operations, for example '+++' expands to ' +  +  + '.
+preprocess_insert_spaces:
+    call clone_user_input
+    
+    pushad
+        mov EAX, user_input
+        mov ECX, user_input_swap
+        
+        .cycle:
+            mov BL, byte [EAX]
+            
+            ; Stop at the first 0.
+            cmp BL, 0
+            je .done
+            
+            ; Test char in BL:
+            call space_test_character
+            jnc .not_expand_spaces
+            
+            ; Save character surrounded by spaces.
+                mov byte [ECX], SPACE_CHAR
+                inc ECX
+                mov byte [ECX], BL
+                inc ECX
+                mov byte [ECX], SPACE_CHAR
+                inc ECX
+                jmp .update_eax
+            
+            .not_expand_spaces:
+                ; Only save the character.
+                mov byte [ECX], BL
+                inc ECX
+                
+            .update_eax:
+                inc EAX
+            
+            ; Check that EAX is not pointing outside of user_input
+            mov EDX, user_input
+            add EDX, INPUT_LIMIT
+            cmp EAX, EDX
+            ja .done
+            
+            ; Check that ECX is not pointing outside of user_input_swap
+            mov EDX, user_input_swap
+            add EDX, INPUT_LIMIT
+            cmp ECX, EDX
+            ja .no_more_space ; There's no more space in user_input_swap.
+            
+            jmp .cycle
+        
+        .no_more_space:
+            mov byte [error_code], USER_INPUT_SWAP_NO_SPACE
+            jmp .end
+            
+        .done:
+            ; Mark the string's end.
+            mov byte [ECX], 0
+            
+        .end:
+    popad
+    
+    call restore_user_input
+    
+    ret
+
+
+; This method tests the character at BL to see if spaces should be inserted around it.
+; Affects: CF, 0 if not, 1 if yes
+; Input: BL, character to test.
+space_test_character:
+    push BX
+    push EAX
+        cmp BL, 0
+        je .ebx_is_zero
+        
+        mov EAX, spaces_chars
+        
+        .cycle:
+            ; Stop if reached the end of spaces_chars:
+            cmp byte [EAX], 0
+            je .not_found
+            
+            cmp BL, byte [EAX]
+            je .found_char
+            
+            inc EAX
+            jmp .cycle
+        
+        .ebx_is_zero:
+            ; It's an invalid char, return false.
+            clc
+            jmp .end
+        
+         ; Return true.
+        .found_char:
+            stc
+            jmp .end
+        
+         ; Return false.
+        .not_found:
+            clc
+            jmp .end
+        
+        .end:
+    pop EAX
+    pop BX
+    ret
+
+
+; Copies user_input_swap string onto user_input.
+restore_user_input:
+    push EAX
+    push EBX
+    push CX
+        ; Start at user_input, and user_input_swap.
+        mov EAX, user_input_swap
+        mov EBX, user_input
+        
+        ; Copy bytes:
+        .cycle:
+            mov EDX, user_input_swap
+            add EDX, INPUT_LIMIT
+            cmp EAX, EDX
+            ja .done ; Check if we reached the end of the string.
+            
+            ; Copy next byte:
+            mov CL, byte [EAX]
+            mov byte [EBX], CL
+            
+            ; Stop at the first 0.
+            cmp CL, 0
+            je .done
+            
+            ; Update addresses.
+            inc EAX
+            inc EBX
+            jmp .cycle
+        .done:
+            ; user_input_swap string was copied to user_input
+    pop CX
+    pop EBX
+    pop EAX
+    ret
+
+
+; This method clones the string at user_input onto user_input_swap.
+clone_user_input:
+    pushad
+        ; Start at user_input, and user_input_swap.
+        mov EAX, user_input
+        mov EBX, user_input_swap
+        
+        ; Copy bytes:
+        .cycle:
+            mov EDX, user_input
+            add EDX, INPUT_LIMIT
+            cmp EAX, EDX
+            ja .done ; Check if we reached the end of the string.
+            
+            ; Copy next byte:
+            mov CL, byte [EAX]
+            mov byte [EBX], CL
+            
+            ; Stop at the first 0.
+            cmp CL, 0
+            je .done
+            
+            ; Update addresses.
+            inc EAX
+            inc EBX
+            jmp .cycle
+        .done:
+            ; user_input string was copied to user_input_swap
+    popad
+    ret
 
 
 ; Check if the string at EDI is equal to the string at ESI. The main string is ESI.
@@ -112,3 +324,4 @@ compare_strings:
 	pop EDI
 	pop ESI
 	ret
+
