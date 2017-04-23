@@ -130,30 +130,30 @@ process_input:
 	nwln
     
     cmp byte [category], CATEGORY_ARITHMETIC
-    je .category_arithmetic
+    je .process_category_arithmetic
     
     cmp byte [category], CATEGORY_COMMAND
-    je .category_command
+    je .process_category_command
     
     cmp byte [category], CATEGORY_COMPLEMENT
-    je .category_complement
+    je .process_category_complement
     
     cmp byte [category], CATEGORY_VARIABLE
-    je .category_variable
+    je .process_category_variable
     
-    .category_arithmetic:
+    .process_category_arithmetic:
         ;call process_arithmetic
         jmp .end
     
-    .category_command:
-        ;call process_command
+    .process_category_command:
+        call process_command
         jmp .end
     
-    .category_complement:
+    .process_category_complement:
         ;call process_complement
         jmp .end
     
-    .category_variable:
+    .process_category_variable:
         ;call process_variable
         jmp .end
     
@@ -174,6 +174,47 @@ preprocess:
 	call strip_user_input
     ret
 
+
+; This method is used to process user_input is a command.
+process_command:
+    push EAX
+        mov EAX, user_input
+        call remove_first_character
+        PutStr user_input
+        nwln
+		
+        ; call tokenize
+		
+		push ESI
+		push EDI
+			mov ESI, user_input
+			mov EDI, CMD_EXIT
+			call compare_strings
+			sete byte [running]
+		pop EDI
+		pop ESI
+		
+    pop EAX
+    ret
+
+; This method removes the first character of the string at EAX, by moving all the remaining characters back one place up to the first byte 0.
+remove_first_character:
+    push EAX
+    push BX
+    .cycle:
+        mov BL, byte [EAX + 1]
+        mov byte [EAX], BL
+        
+        cmp BL, 0
+        je .done
+        
+        inc EAX
+        jmp .cycle
+    
+        .done:
+    pop BX
+    pop EAX
+    ret
 
 check_category:
     pushad
