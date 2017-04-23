@@ -242,9 +242,7 @@ The steps to follow are:
 1. Check for invalid characters:
 
 	Only the following characters are valid:
-		All characters: 
-		
-		"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/~= :#"
+		All characters: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-*/~= :#"
 
 	These characters are divided in the following categories:
 		a. Digits: "0123456789ABCDEF"
@@ -339,4 +337,16 @@ Before the actual processing of arithmetic input, preprocessing should be done t
         '5oct + 4' to '5oct + 4dec'
 
 5. **End.** The string is now properly preprocessed, and it can be passed on to the evaluating method.
+
+# Input preprocessing for arithmetic operations:
+
+After preprocessing, if the category is found to be arithmetic operation, then this preprocessing is done:
+
+1. Add implicit result base conversion. If no result base was indicated (with ' = base' at the end) then the default is added.
+
+    Examples:
+        '5dec' to '5dec = dec'
+        '5dec - 1oct' to '5dec - 1oct = dec'
+
+2. The string is now properly preprocessed, and it can be passed on to the evaluating method.
 
