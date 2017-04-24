@@ -54,13 +54,17 @@
 		; This string is showed at the end of the program execution:
 		finish_msg db "Bye!", 0
 		
+		; End of a message with string closing:
+		str_close_string db "'.", 0
+		
 		; Strings for the processing method:
 		processing_op db "Processing: '", 0
-		processing_op2 db "'.", 0
 		
 		; Strings for the preprocessing method:
 		preprocessed_msg db "Preprocessed: '", 0
-		preprocessed_msg2 db "'.", 0
+		
+		; Strings for the process_command method:
+		str_process_command db "Process command: '", 0
 	
 		; String for categories:
 		category_info db "Operation category: ", 0
@@ -94,9 +98,9 @@
 		category db 0
 
     ; Commands (that start with #) recognized:
-		CMD_EXIT db "exit", 0
-		CMD_VARS db "vars", 0
-		CMD_ABOUT db "about", 0
+		cmd_exit db "exit", 0
+		cmd_vars db "vars", 0
+		cmd_about db "about", 0
 	
 	; Base strings:
 		binary_base_identifier db "bin", 0
@@ -107,7 +111,7 @@
 	; Sets of characters:
 	; These sets can be used to classify strings.
 		; Characters that are expanded with spaces:
-		spaces_chars db "+-*/()=:", 0
+		spaces_chars db "+-*/()=:#", 0
 		
 		; Characters for variable names:
 		variable_names_chars db "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", 0
@@ -170,7 +174,7 @@ process_input:
     ; Print "Processing: '<user_input>'"
     PutStr processing_op
     PutStr user_input
-    PutStr processing_op2
+    PutStr str_close_string
     nwln
 	
 	call preprocess
@@ -178,7 +182,7 @@ process_input:
     ; Print "Preprocessed: '<user_input preprocessed>'"
     PutStr preprocessed_msg
     PutStr user_input
-    PutStr preprocessed_msg2
+    PutStr str_close_string
     nwln
 	
 	; Compute category:
@@ -224,10 +228,15 @@ process_input:
 ; This method is used to process user_input as a command.
 process_command:
     push EAX
+		; This removes the # sign:
         mov EAX, user_input
         call remove_first_character
+		; This removes the first space after the # ("# cmd")
+        call remove_first_character
 		
-        ; PutStr user_input
+		PutStr str_process_command
+        PutStr user_input
+		PutStr str_close_string
         nwln
 		
 		
