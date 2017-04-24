@@ -74,6 +74,22 @@
 		category_name_complement db "complement", 0
 		category_name_variable db "variable definition", 0
 		category_name_invalid db "invalid", 0
+		
+		; String to be printed when the #about command is used.
+		about_string db \
+			"Tecnologico de Costa Rica", 10,\
+			"  - Escuela de Computación", 10,\
+			"  - Arquitectura de Computadores", 10,\
+			"  - Sede de Cartago", 10,\
+			"  - Primer proyecto", 10, 10,\
+			"  Profesor:", 10,\
+			"    Esteban Arias", 10,\
+			"  Grupo:", 10,\
+			"    2", 10,\
+			"  Estudiantes:", 10,\
+			"    Kevin Sem Piedra Matamoros", 10,\
+			"  Year:", 10,\
+			"    2017", 10, 0
 	
 	; String memory spaces:
 		; This is the string space for user input
@@ -89,7 +105,7 @@
 		token_space times STRING_SIZE db 0
 	
 	; This byte is either 0, or 1. 0 means that the program should stop, and 1 that it should continue. It's checked every cycle to see if the program should stop.
-		running db 0
+		running db 1
 	
 	; This byte is used to check if there was an error (0 means no error):
 		error_code db 0
@@ -157,15 +173,18 @@
 			
 			; Process user_input
 			call process_input
+			nwln
 
 			; Check if there needs to be another cycle.
 			cmp byte [running], 0
-			je .read_cmd
+			je .end
+			jmp .read_cmd
 
-		; Print the end message:
-        nwln
-        PutStr finish_msg
-        nwln
+		.end:
+			; Print the end message:
+			nwln
+			PutStr finish_msg
+			nwln
     .EXIT
 
 
@@ -225,6 +244,7 @@ process_input:
 	
 	ret
 
+
 ; This method is used to process user_input as a command.
 process_command:
     push EAX
@@ -238,11 +258,89 @@ process_command:
         PutStr user_input
 		PutStr str_close_string
         nwln
+        nwln
 		
+		call get_first_token
 		
-		
+		push ESI
+		push EDI
+			mov ESI, token_space
+			
+			; Compare token_space to cmd_exit
+			mov EDI, cmd_exit
+			call compare_strings
+			jne .wasnt_cmd_exit
+				mov byte [running], 0
+				jmp .end_commands
+			.wasnt_cmd_exit:
+			
+			; Compare token_space to cmd_about
+			mov EDI, cmd_about
+			call compare_strings
+			jne .wasnt_cmd_about
+				PutStr about_string
+				jmp .end_commands
+			.wasnt_cmd_about:
+			
+			.end_commands:
+		pop EDI
+		pop ESI
     pop EAX
     ret
+
+
+; Moves the first token from user_input into token_space
+get_first_token:
+	pushad
+		; Put the first token limit in EAX
+		call find_first_token_limit
+		
+		; Move found limit to EBX
+		mov EBX, EAX
+		
+		; Move the first token from user_input onto token_space
+		mov EAX, user_input
+		call copy_to_token
+		
+		; Remove token from user_input
+		call cut_up_to
+		
+	popad
+	ret
+
+
+; Finds the limit of the first token in user_input.
+	; Output: EAX, the limit of the token
+find_first_token_limit:
+	push EBX
+		; Start from user_input.
+		mov EAX, user_input
+		
+		; Put the user_input string limit in EBX
+		mov EBX, user_input
+		add EBX, INPUT_LIMIT
+		
+		; Seek cycle:
+		.cycle:
+			; Stop if EAX is above EBX (the end of the string)
+			cmp EAX, EBX
+			ja .done
+			
+			; Stop at the first space
+			cmp byte [EAX], SPACE_CHAR
+			je .done
+			
+			; Stop at the first 0
+			cmp byte [EAX], 0
+			je .done
+			
+			; Next cycle:
+			inc EAX
+			jmp .cycle
+		
+		.done:
+	pop EBX
+	ret
 
 
 ; This method preprocesses user_input string.
@@ -323,6 +421,7 @@ copy_to_token:
             mov byte [EDX], CL
             
             inc EAX
+			inc EDX
             jmp .cycle
             
         .done:
