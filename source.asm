@@ -226,7 +226,7 @@ process_input:
 	je .process_category_variable
 	
 	.process_category_arithmetic:
-		;call process_arithmetic
+		; call process_arithmetic
 		jmp .end
 	
 	.process_category_command:
@@ -234,11 +234,11 @@ process_input:
 		jmp .end
 	
 	.process_category_complement:
-		;call process_complement
+		; call process_complement
 		jmp .end
 	
 	.process_category_variable:
-		;call process_variable
+		; call process_variable
 		jmp .end
 	
 	.end:
@@ -500,7 +500,9 @@ remove_first_character:
 
 ; This method checks the category of the expression at user_input.
 check_category:
-	pushad
+	push AX
+	push BX
+	push ECX
 		; Checks the first byte:
 		mov AL, byte [user_input]
 		
@@ -552,45 +554,54 @@ check_category:
 			jmp .end
 		
 		.end:
-	popad
+	pop ECX
+	pop BX
+	pop AX
 	ret
+
 
 ; This method prints the category's name depending on the value of the category variable.
 print_category_name:
-	cmp byte [category], CATEGORY_ARITHMETIC
-	je .process_category_arithmetic
-	
-	cmp byte [category], CATEGORY_COMMAND
-	je .process_category_command
-	
-	cmp byte [category], CATEGORY_COMPLEMENT
-	je .process_category_complement
-	
-	cmp byte [category], CATEGORY_VARIABLE
-	je .process_category_variable
-	
-	; No category:
-	PutStr category_name_invalid
-	jmp .end
-	
-	.process_category_arithmetic:
-		PutStr category_name_arithmetic
+	push AX
+		; Print category name comparing category byte to the different categories:
+		mov AL, byte [category]
+		
+		cmp , CATEGORY_ARITHMETIC
+		je .process_category_arithmetic
+		
+		cmp byte [category], CATEGORY_COMMAND
+		je .process_category_command
+		
+		cmp byte [category], CATEGORY_COMPLEMENT
+		je .process_category_complement
+		
+		cmp byte [category], CATEGORY_VARIABLE
+		je .process_category_variable
+		
+		; No category:
+		PutStr category_name_invalid
 		jmp .end
-	
-	.process_category_command:
-		PutStr category_name_command
-		jmp .end
-	
-	.process_category_complement:
-		PutStr category_name_complement
-		jmp .end
-	
-	.process_category_variable:
-		PutStr category_name_variable
-		jmp .end
-	
-	.end:
+		
+		.process_category_arithmetic:
+			PutStr category_name_arithmetic
+			jmp .end
+		
+		.process_category_command:
+			PutStr category_name_command
+			jmp .end
+		
+		.process_category_complement:
+			PutStr category_name_complement
+			jmp .end
+		
+		.process_category_variable:
+			PutStr category_name_variable
+			jmp .end
+		
+		.end:
+	pop AX
 	ret
+
 
 ; This method determines whether the character in BL is in the string at ECX.
 ; Affects: CF, 1 if it was, 0 if it wasn't
@@ -618,6 +629,7 @@ find_character:
 		.end:
 	pop ECX
 	ret
+
 
 ; This method introduces spaces around characters which return true when tested with space_test_character; this is intended to be used for operations, for example '+++' expands to ' +  +  + '.
 preprocess_insert_spaces:
@@ -731,12 +743,14 @@ preprocess_remove_repeated_spaces:
 	ret
 
 
+; Removes remove spaces at the beginning and end of user_input
 strip_user_input:
 	call strip_beginning_user_input
 	call strip_end_user_input
 	ret
 
 
+; Remove the spaces at the beginning of user_input.
 strip_beginning_user_input:
 	pushad
 		; Find the first non-space:
@@ -799,7 +813,8 @@ strip_beginning_user_input:
 	popad
 	ret
 
-; 
+
+; Remove the spaces at the end of user_input.
 strip_end_user_input:
 	pushad
 		mov EAX, user_input
@@ -831,6 +846,7 @@ strip_end_user_input:
 			; Trailing spaces have been replaced.
 	popad
 	ret
+
 
 ; This method tests the character at BL to see if spaces should be inserted around it.
 ; Affects: CF, 0 if not, 1 if yes
@@ -913,7 +929,10 @@ restore_user_input:
 
 ; This method clones the string at user_input onto user_input_swap.
 clone_user_input:
-	pushad
+	push EAX
+	push EBX
+	push CX
+	push EDX
 		; Start at user_input, and user_input_swap.
 		mov EAX, user_input
 		mov EBX, user_input_swap
@@ -939,7 +958,10 @@ clone_user_input:
 			jmp .cycle
 		.done:
 			; user_input string was copied to user_input_swap
-	popad
+	pop EDX
+	pop CX
+	pop EBX
+	pop EAX
 	ret
 
 
