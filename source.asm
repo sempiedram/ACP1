@@ -166,6 +166,7 @@
 		
 		.read_cmd:
 			; Primpt the command prompt
+			nwln
 			PutStr cmd_prompt
 			
 			; Get the input string
@@ -173,7 +174,6 @@
 			
 			; Process user_input
 			call process_input
-			nwln
 
 			; Check if there needs to be another cycle.
 			cmp byte [running], 0
@@ -182,7 +182,6 @@
 
 		.end:
 			; Print the end message:
-			nwln
 			PutStr finish_msg
 			nwln
     .EXIT
