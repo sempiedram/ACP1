@@ -5,7 +5,10 @@
 
 ; equ definitions:
 	; This (minus one) is the size limit for the user_input string:
-		INPUT_LIMIT equ 1024
+		INPUT_LIMIT equ 2048
+		
+	; General string spaces:
+		STRING_SIZE equ 512
 	
 	; Characters:
 		; Space character:
@@ -27,6 +30,12 @@
 		OPEN_PARENTHESIS equ '('
 		CLOSE_PARENTHESIS equ ')'
 
+		; Operations:
+		ADDITION_OPERATION_CHAR equ '+'
+		SUBTRACTION_OPERATION_CHAR equ '-'
+		MULTIPLICATION_OPERATION_CHAR equ '*'
+		DIVISION_OPERATION_CHAR equ '/'
+
 	; Error codes:
 		USER_INPUT_SWAP_NO_SPACE equ 1
 	
@@ -36,21 +45,6 @@
 		CATEGORY_COMPLEMENT equ 4
 		CATEGORY_VARIABLE equ 8
 		CATEGORY_INVALID equ 16
-	
-	; Token types:
-		TOKEN_UNKNOWN equ 0
-		TOKEN_WORD equ 1
-		TOKEN_NUMBER equ 2
-		TOKEN_VARIABLE equ 3
-		TOKEN_BASE_IDENTIFIER equ 4
-		TOKEN_OPEN_PARENTHESIS equ 5
-		TOKEN_CLOSE_PARENTHESIS equ 6
-		TOKEN_TOKEN_OPERATION equ 7
-		TOKEN_BASE_INDICATOR equ 8
-		TOKEN_COMPLEMENT_INDICATOR equ 9
-		TOKEN_COMMAND_INDICATOR equ 10
-		TOKEN_VARIABLE_INDICATOR equ 11
-
 
 .DATA
 	; This is the string used as prompt for the next operation:
@@ -86,6 +80,9 @@
 		; Strings for general use:
 		string_a times STRING_SIZE db 0
 		string_b times STRING_SIZE db 0
+		
+		; Space for token processing:
+		token_space times STRING_SIZE db 0
 	
 	; This byte is either 0, or 1. 0 means that the program should stop, and 1 that it should continue. It's checked every cycle to see if the program should stop.
 		running db 0
@@ -101,6 +98,12 @@
 		CMD_VARS db "vars", 0
 		CMD_ABOUT db "about", 0
 	
+	; Base strings:
+		binary_base_identifier db "bin", 0
+		octal_base_identifier db "oct", 0
+		decimal_base_identifier db "dec", 0
+		hexadecimal_base_identifier db "hex", 0
+	
 	; Sets of characters:
 	; These sets can be used to classify strings.
 		; Characters that are expanded with spaces:
@@ -111,6 +114,12 @@
 		
 		; Valid digit characters:
 		digits_chars db "0123456789ABCDEF", 0
+		
+		; Decimal digit characters:
+		decimal_digits_chars db "0123456789", 0
+		
+		; Valid number characters:
+		number_chars db "0123456789ABCDEFbcdehinotx", 0
 		
 		; Base indentifier characters:
 		base_identifier_chars db "bcdehinotx", 0
@@ -212,6 +221,20 @@ process_input:
 	
 	ret
 
+; This method is used to process user_input as a command.
+process_command:
+    push EAX
+        mov EAX, user_input
+        call remove_first_character
+		
+        ; PutStr user_input
+        nwln
+		
+		
+		
+    pop EAX
+    ret
+
 
 ; This method preprocesses user_input string.
 preprocess:
@@ -226,78 +249,30 @@ preprocess:
     ret
 
 
-; This method generates tokens from user_input and populates expression_space with them.
-tokenize:
-    call clone_user_input
-    
-    pushad
-        ; 1. Find delimiter space or end of string
-        mov EAX, user_input
-        
-        ; EBX contains the limit of user_input
-        mov EBX, user_input
-        add EBX, INPUT_LIMIT
-        
-        .cycle_space:
-            ; Stop if reached the end of user_input
-            cmp EAX, EBX
-            ja .end_of_string
-        
-            ; Stop at first space:
-            cmp byte [EAX], SPACE_CHAR
-            je .is_space
-            
-            ; Stop at the end of the string:
-            cmp byte [EAX], 0
-            je .end_of_string
-            
-            ; Do next cycle:
-            inc EAX
-            jmp .cycle_space
-        
-        .is_space:
-        .end_of_string:
-            ; Copy word end into EBX for copy_to_token to use it.
-            mov EBX, EAX
-        
-        ; 2.1 Copy token string to string_a
-        
-        mov EAX, user_input
-        call copy_to_token
-        
-        ; 2.2 Remove that part of the string from the user_input
-        
-        call cut_up_to
-        
-        ; 3. Find token category of string in string_a
-		
-		call check_token_category
-		
-        ; 4. Generate token in token_space
-        ; 5. Copy new token into expression_space
-    popad
-    ret
 
-
-; This method checks the string_a and returns the token type in the ECX register.
-check_token_category:
-	push EBX
-		call get_string_length
-		
-		cmp EBX, 0
-		jne .non_empty_string
-			; Return UNKNOWN
-			mov ECX, TOKEN_UNKNOWN
-			jmp .end
-		.non_empty_string:
-			cmp EBX, 1
-			jne .multiple_characters
-				; It's a single character. Check the character:
-				cmp byte [OPEN_PA], 
-			.multiple_characters
-				; Check character set of string_a
+; Clones the string at ESI, into EDI
+clone_string_into:
+	push ESI
+	push EDI
+	push AX
+		.cycle:
+			; Move the next byte
+			mov AL, byte [ESI]
+			mov byte [EDI], AL
+			
+			; Stop at 0
+			cmp AL, 0
+			je .end
+			
+			; Next cycle
+			inc ESI
+			inc EDI
+			jmp .cycle
+			
 		.end:
-	pop EBX
+	pop AX
+	pop EDI
+	pop ESI
 	ret
 
 
@@ -362,29 +337,6 @@ cut_up_to:
             jmp .cycle
         .done:
     pop EBX
-    ret
-
-; This method is used to process user_input is a command.
-process_command:
-    push EAX
-        mov EAX, user_input
-        call remove_first_character
-		
-        ; PutStr user_input
-        nwln
-		
-        ; call tokenize
-		
-		push ESI
-		push EDI
-			mov ESI, user_input
-			mov EDI, CMD_EXIT
-			call compare_strings
-			sete byte [running]
-		pop EDI
-		pop ESI
-		
-    pop EAX
     ret
 
 ; This method removes the first character of the string at EAX, by moving all the remaining characters back one place up to the first byte 0.
