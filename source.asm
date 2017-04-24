@@ -84,13 +84,13 @@
 			"  - Sede de Cartago", 10,\
 			"  - Primer proyecto", 10, 10,\
 			"  Profesor:", 10,\
-			"    Esteban Arias", 10,\
+			"	Esteban Arias", 10,\
 			"  Grupo:", 10,\
-			"    2", 10,\
+			"	2", 10,\
 			"  Estudiantes:", 10,\
-			"    Kevin Sem Piedra Matamoros", 10,\
+			"	Kevin Sem Piedra Matamoros", 10,\
 			"  Year:", 10,\
-			"    2017", 10, 0
+			"	2017", 10, 0
 	
 	; String memory spaces:
 		; This is the string space for user input
@@ -114,7 +114,7 @@
 	; This byte holds the category computed by the check_category method:
 		category db 0
 
-    ; Commands (that start with #) recognized:
+	; Commands (that start with #) recognized:
 		cmd_exit db "exit", 0
 		cmd_vars db "vars", 0
 		cmd_about db "about", 0
@@ -160,7 +160,7 @@
 
 ; Main method:
 .CODE
-    .STARTUP
+	.STARTUP
 		; This is the main cycle of:
 		; 	1. get input
 		; 	2. process input
@@ -186,79 +186,79 @@
 			; Print the end message:
 			PutStr finish_msg
 			nwln
-    .EXIT
+	.EXIT
 
 
 ; This method processes the user_input string.
 process_input:
-    ; Print "Processing: '<user_input>'"
-    PutStr processing_op
-    PutStr user_input
-    PutStr str_close_string
-    nwln
+	; Print "Processing: '<user_input>'"
+	PutStr processing_op
+	PutStr user_input
+	PutStr str_close_string
+	nwln
 	
 	call preprocess
-    
-    ; Print "Preprocessed: '<user_input preprocessed>'"
-    PutStr preprocessed_msg
-    PutStr user_input
-    PutStr str_close_string
-    nwln
+	
+	; Print "Preprocessed: '<user_input preprocessed>'"
+	PutStr preprocessed_msg
+	PutStr user_input
+	PutStr str_close_string
+	nwln
 	
 	; Compute category:
-    call check_category
+	call check_category
 	
 	; Print category:
 	PutStr category_info
 	call print_category_name
 	nwln
-    
-    cmp byte [category], CATEGORY_ARITHMETIC
-    je .process_category_arithmetic
-    
-    cmp byte [category], CATEGORY_COMMAND
-    je .process_category_command
-    
-    cmp byte [category], CATEGORY_COMPLEMENT
-    je .process_category_complement
-    
-    cmp byte [category], CATEGORY_VARIABLE
-    je .process_category_variable
-    
-    .process_category_arithmetic:
-        ;call process_arithmetic
-        jmp .end
-    
-    .process_category_command:
-        call process_command
-        jmp .end
-    
-    .process_category_complement:
-        ;call process_complement
-        jmp .end
-    
-    .process_category_variable:
-        ;call process_variable
-        jmp .end
-    
-    .end:
+	
+	cmp byte [category], CATEGORY_ARITHMETIC
+	je .process_category_arithmetic
+	
+	cmp byte [category], CATEGORY_COMMAND
+	je .process_category_command
+	
+	cmp byte [category], CATEGORY_COMPLEMENT
+	je .process_category_complement
+	
+	cmp byte [category], CATEGORY_VARIABLE
+	je .process_category_variable
+	
+	.process_category_arithmetic:
+		;call process_arithmetic
+		jmp .end
+	
+	.process_category_command:
+		call process_command
+		jmp .end
+	
+	.process_category_complement:
+		;call process_complement
+		jmp .end
+	
+	.process_category_variable:
+		;call process_variable
+		jmp .end
+	
+	.end:
 	ret
 
 
 ; This method is used to process user_input as a command.
 process_command:
-    push EAX
+	push EAX
 		; This removes the # sign:
-        mov EAX, user_input
-        call remove_first_character
+		mov EAX, user_input
+		call remove_first_character
 		; This removes the first space after the # ("# cmd")
-        call remove_first_character
+		call remove_first_character
 		
 		PutStr str_process_command
-        PutStr user_input
+		PutStr user_input
 		PutStr str_close_string
-        nwln
-        nwln
+		nwln
+		nwln
 		
 		call get_first_token
 		
@@ -293,20 +293,23 @@ process_command:
 			.end_commands:
 		pop EDI
 		pop ESI
-    pop EAX
-    ret
+	pop EAX
+	ret
 
 
+; Method for handling the #about command.
 print_about_info:
 	PutStr about_string
 	ret
 
 
+; Method for handling the #exit command. It stops the program cycle.
 stop_running:
 	mov byte [running], 0
 	ret
 
 
+; Method for handling the #vars command: It prints all defined vars.
 print_vars:
 	PutCh 'v'
 	PutCh 'a'
@@ -380,8 +383,7 @@ preprocess:
 	
 	; Strip end and beginning spaces:
 	call strip_user_input
-    ret
-
+	ret
 
 
 ; Clones the string at ESI, into EDI
@@ -434,500 +436,511 @@ get_string_length:
 
 ; This method copies the string from the address EAX up to EBX, to token_space
 copy_to_token:
-    pushad
-        ; EDX keeps the address of where to copy the next byte.
-        mov EDX, token_space
-        
-        .cycle:
-            ; Stop when reached the EBX address
-            cmp EAX, EBX
-            jae .done
-            
-            ; Move a byte from EAX to token_space
-            mov CL, byte [EAX]
-            mov byte [EDX], CL
-            
-            inc EAX
+	pushad
+		; EDX keeps the address of where to copy the next byte.
+		mov EDX, token_space
+		
+		.cycle:
+			; Stop when reached the EBX address
+			cmp EAX, EBX
+			jae .done
+			
+			; Move a byte from EAX to token_space
+			mov CL, byte [EAX]
+			mov byte [EDX], CL
+			
+			inc EAX
 			inc EDX
-            jmp .cycle
-            
-        .done:
-            ; Close the string at token_space
-            mov byte [EDX], 0
-    popad
-    ret
+			jmp .cycle
+			
+		.done:
+			; Close the string at token_space
+			mov byte [EDX], 0
+	popad
+	ret
+
 
 ; Removes from the string in address EAX the characters up to EBX, and moves the rest of the string accordingly.
 cut_up_to:
-    push EBX
-        .cycle:
-            ; Stop just when above EBX
-            cmp EAX, EBX
-            ja .done
-            
-            ; Remove the first character of the string at EAX
-            call remove_first_character
-            
-            dec EBX
-            jmp .cycle
-        .done:
-    pop EBX
-    ret
+	push EBX
+		.cycle:
+			; Stop just when above EBX
+			cmp EAX, EBX
+			ja .done
+			
+			; Remove the first character of the string at EAX
+			call remove_first_character
+			
+			dec EBX
+			jmp .cycle
+		.done:
+	pop EBX
+	ret
+
 
 ; This method removes the first character of the string at EAX, by moving all the remaining characters back one place up to the first byte 0.
 remove_first_character:
-    push EAX
-    push BX
-    .cycle:
-        mov BL, byte [EAX + 1]
-        mov byte [EAX], BL
-        
-        cmp BL, 0
-        je .done
-        
-        inc EAX
-        jmp .cycle
-    
-        .done:
-    pop BX
-    pop EAX
-    ret
+	push EAX
+	push BX
+	.cycle:
+		mov BL, byte [EAX + 1]
+		mov byte [EAX], BL
+		
+		cmp BL, 0
+		je .done
+		
+		inc EAX
+		jmp .cycle
+	
+		.done:
+	pop BX
+	pop EAX
+	ret
 
+
+; This method checks the category of the expression at user_input.
 check_category:
-    pushad
-        mov AL, byte [user_input]
-        
-        cmp AL, COMMAND_CHAR
-        je .is_command
-        
-        cmp AL, COMPLEMENT_CHAR
-        je .is_complement
-        
-        jmp .second_fase
-        
-        .is_command:
-            mov byte [category], CATEGORY_COMMAND
-            jmp .end
-        
-        .is_complement:
-            mov byte [category], CATEGORY_COMPLEMENT
-            jmp .end
-            
-        .second_fase:
-            ; Up to this point, it's either CATEGORY_ARITHMETIC or CATEGORY_VARIABLE
-            
-            mov BL, VARIABLE_DEF_CHAR
-            mov ECX, user_input
-            call find_character
-            jc .is_variable_definition
-            
-            mov BL, RESULT_BASE_INDICATOR_CHAR
-            call find_character
-            jc .is_arithmetic
-            
-            ; By default, unrecognized categories will be treated as CATEGORY_ARITHMETIC
-            
-            mov byte [category], CATEGORY_ARITHMETIC
-            jmp .end
-            
-        .is_variable_definition:
-            mov byte [category], CATEGORY_VARIABLE
-            jmp .end
-        
-        .is_arithmetic:
-            mov byte [category], CATEGORY_ARITHMETIC
-            jmp .end
-        
-        .end:
-    popad
-    ret
+	pushad
+		; Checks the first byte:
+		mov AL, byte [user_input]
+		
+		; Check if it's a command: '#'
+		cmp AL, COMMAND_CHAR
+		je .is_command
+		
+		; Check if it's a complement operation: '~'
+		cmp AL, COMPLEMENT_CHAR
+		je .is_complement
+		
+		jmp .second_fase
+		
+		; Handle commands
+		.is_command:
+			mov byte [category], CATEGORY_COMMAND
+			jmp .end
+		
+		; Handle complement
+		.is_complement:
+			mov byte [category], CATEGORY_COMPLEMENT
+			jmp .end
+			
+		.second_fase:
+			; Up to this point, it's either CATEGORY_ARITHMETIC or CATEGORY_VARIABLE
+			
+			; Look for the VARIABLE_DEF_CHAR character: ':'
+			mov BL, VARIABLE_DEF_CHAR
+			mov ECX, user_input
+			call find_character
+			jc .is_variable_definition
+			
+			; Look for the RESULT_BASE_INDICATOR_CHAR character: '='
+			mov BL, RESULT_BASE_INDICATOR_CHAR
+			call find_character
+			jc .is_arithmetic
+			
+			; By default, unrecognized categories will be treated as CATEGORY_ARITHMETIC
+			
+			mov byte [category], CATEGORY_ARITHMETIC
+			jmp .end
+		
+		.is_variable_definition:
+			mov byte [category], CATEGORY_VARIABLE
+			jmp .end
+		
+		.is_arithmetic:
+			mov byte [category], CATEGORY_ARITHMETIC
+			jmp .end
+		
+		.end:
+	popad
+	ret
 
 ; This method prints the category's name depending on the value of the category variable.
 print_category_name:
 	cmp byte [category], CATEGORY_ARITHMETIC
-    je .process_category_arithmetic
-    
-    cmp byte [category], CATEGORY_COMMAND
-    je .process_category_command
-    
-    cmp byte [category], CATEGORY_COMPLEMENT
-    je .process_category_complement
-    
-    cmp byte [category], CATEGORY_VARIABLE
-    je .process_category_variable
+	je .process_category_arithmetic
+	
+	cmp byte [category], CATEGORY_COMMAND
+	je .process_category_command
+	
+	cmp byte [category], CATEGORY_COMPLEMENT
+	je .process_category_complement
+	
+	cmp byte [category], CATEGORY_VARIABLE
+	je .process_category_variable
 	
 	; No category:
 	PutStr category_name_invalid
 	jmp .end
-    
-    .process_category_arithmetic:
-        PutStr category_name_arithmetic
-        jmp .end
-    
-    .process_category_command:
-        PutStr category_name_command
-        jmp .end
-    
-    .process_category_complement:
-        PutStr category_name_complement
-        jmp .end
-    
-    .process_category_variable:
-        PutStr category_name_variable
-        jmp .end
-    
-    .end:
+	
+	.process_category_arithmetic:
+		PutStr category_name_arithmetic
+		jmp .end
+	
+	.process_category_command:
+		PutStr category_name_command
+		jmp .end
+	
+	.process_category_complement:
+		PutStr category_name_complement
+		jmp .end
+	
+	.process_category_variable:
+		PutStr category_name_variable
+		jmp .end
+	
+	.end:
 	ret
 
 ; This method determines whether the character in BL is in the string at ECX.
 ; Affects: CF, 1 if it was, 0 if it wasn't
 ; Inputs: BL character to look for, ECX address of the string.
 find_character:
-    push ECX
-        .cycle:
-            cmp byte [ECX], BL
-            je .found
-            
-            cmp byte [ECX], 0
-            je .end_of_string
-            
-            inc ECX
-            jmp .cycle
-            
-        .end_of_string:
-            clc
-            jmp .end
-            
-        .found:
-            stc
-            jmp .end
-        
-        .end:
-    pop ECX
-    ret
+	push ECX
+		.cycle:
+			cmp byte [ECX], BL
+			je .found
+			
+			cmp byte [ECX], 0
+			je .end_of_string
+			
+			inc ECX
+			jmp .cycle
+			
+		.end_of_string:
+			clc
+			jmp .end
+			
+		.found:
+			stc
+			jmp .end
+		
+		.end:
+	pop ECX
+	ret
 
 ; This method introduces spaces around characters which return true when tested with space_test_character; this is intended to be used for operations, for example '+++' expands to ' +  +  + '.
 preprocess_insert_spaces:
-    call clone_user_input
-    
-    pushad
-        mov EAX, user_input
-        mov ECX, user_input_swap
-        
-        .cycle:
-            mov BL, byte [EAX]
-            
-            ; Stop at the first 0.
-            cmp BL, 0
-            je .done
-            
-            ; Test char in BL:
-            call space_test_character
-            jnc .not_expand_spaces
-            
-            ; Save character surrounded by spaces.
-                mov byte [ECX], SPACE_CHAR
-                inc ECX
-                mov byte [ECX], BL
-                inc ECX
-                mov byte [ECX], SPACE_CHAR
-                inc ECX
-                jmp .update_eax
-            
-            .not_expand_spaces:
-                ; Only save the character.
-                mov byte [ECX], BL
-                inc ECX
-                
-            .update_eax:
-                inc EAX
-            
-            ; Check that EAX is not pointing outside of user_input
-            mov EDX, user_input
-            add EDX, INPUT_LIMIT
-            cmp EAX, EDX
-            ja .done
-            
-            ; Check that ECX is not pointing outside of user_input_swap
-            mov EDX, user_input_swap
-            add EDX, INPUT_LIMIT
-            cmp ECX, EDX
-            ja .no_more_space ; There's no more space in user_input_swap.
-            
-            jmp .cycle
-        
-        .no_more_space:
-            mov byte [error_code], USER_INPUT_SWAP_NO_SPACE
-            jmp .end
-            
-        .done:
-            ; Mark the string's end.
-            mov byte [ECX], 0
-            
-        .end:
-    popad
-    
-    call restore_user_input
-    
-    ret
+	call clone_user_input
+	
+	pushad
+		mov EAX, user_input
+		mov ECX, user_input_swap
+		
+		.cycle:
+			mov BL, byte [EAX]
+			
+			; Stop at the first 0.
+			cmp BL, 0
+			je .done
+			
+			; Test char in BL:
+			call space_test_character
+			jnc .not_expand_spaces
+			
+			; Save character surrounded by spaces.
+				mov byte [ECX], SPACE_CHAR
+				inc ECX
+				mov byte [ECX], BL
+				inc ECX
+				mov byte [ECX], SPACE_CHAR
+				inc ECX
+				jmp .update_eax
+			
+			.not_expand_spaces:
+				; Only save the character.
+				mov byte [ECX], BL
+				inc ECX
+				
+			.update_eax:
+				inc EAX
+			
+			; Check that EAX is not pointing outside of user_input
+			mov EDX, user_input
+			add EDX, INPUT_LIMIT
+			cmp EAX, EDX
+			ja .done
+			
+			; Check that ECX is not pointing outside of user_input_swap
+			mov EDX, user_input_swap
+			add EDX, INPUT_LIMIT
+			cmp ECX, EDX
+			ja .no_more_space ; There's no more space in user_input_swap.
+			
+			jmp .cycle
+		
+		.no_more_space:
+			mov byte [error_code], USER_INPUT_SWAP_NO_SPACE
+			jmp .end
+			
+		.done:
+			; Mark the string's end.
+			mov byte [ECX], 0
+			
+		.end:
+	popad
+	
+	call restore_user_input
+	
+	ret
 
 
 ; Removes repeated spaces in user_input.
 preprocess_remove_repeated_spaces:
-    pushf
-    pushad
+	pushf
+	pushad
 		; This section copies user_input onto user_input_swap removing spaces:
-        mov AL, 0
-        mov EBX, user_input
-        mov ECX, user_input_swap
+		mov AL, 0
+		mov EBX, user_input
+		mov ECX, user_input_swap
 
-        .cycle:
-            mov AH, byte [EBX]
-            
-            cmp AH, 0
-            jne .inside_string
-                mov byte [ECX], 0
-                jmp .end
-            .inside_string:
-            
-            cmp AH, SPACE_CHAR
-            je .was_space
-                mov byte [ECX], AH
-                inc ECX
-                mov AL, 0
-                jmp .after
-            .was_space:
-                cmp AL, 1
-                mov AL, 1
-                je .previous_was_space
-                    mov byte [ECX], AH
-                    inc ECX
-                    jmp .after
-                .previous_was_space:
-            .after:
-            
-            inc EBX
-            jmp .cycle
-        
-        .end:
-        
-    ; This section copies the result from user_input_swap onto user_input:
-        call restore_user_input
-    popad
-    popf
-    ret
+		.cycle:
+			mov AH, byte [EBX]
+			
+			cmp AH, 0
+			jne .inside_string
+				mov byte [ECX], 0
+				jmp .end
+			.inside_string:
+			
+			cmp AH, SPACE_CHAR
+			je .was_space
+				mov byte [ECX], AH
+				inc ECX
+				mov AL, 0
+				jmp .after
+			.was_space:
+				cmp AL, 1
+				mov AL, 1
+				je .previous_was_space
+					mov byte [ECX], AH
+					inc ECX
+					jmp .after
+				.previous_was_space:
+			.after:
+			
+			inc EBX
+			jmp .cycle
+		
+		.end:
+		
+	; This section copies the result from user_input_swap onto user_input:
+		call restore_user_input
+	popad
+	popf
+	ret
 
 
 strip_user_input:
-    call strip_beginning_user_input
-    call strip_end_user_input
-    ret
+	call strip_beginning_user_input
+	call strip_end_user_input
+	ret
 
 
 strip_beginning_user_input:
-    pushad
-        ; Find the first non-space:
-        
-        ; Start at user_input.
-        mov EAX, user_input
-        
-        ; Put in EBX the user_input string end.
-        mov EBX, user_input
-        add EBX, INPUT_LIMIT
-        
-        .space:
-            ; Stop at first non-space:
-            cmp byte [EAX], SPACE_CHAR
-            jne .not_space
-            
-            ; Stop at the string end:
-            cmp EAX, EBX
-            jae .end_of_string
-            
-            inc EAX
-            jmp .space
-        
-        .end_of_string:
-            mov EAX, user_input
-        
-        .not_space:
-        mov EBX, EAX
-        mov EAX, user_input
-        
-        ; EBX is now pointing to the first non-space character in user_input
-        ;   or to the beginning of the string.
-        
-        ; Put in EBX the user_input string end.
-        mov ECX, user_input
-        add ECX, INPUT_LIMIT
-        
-        .shift_chars:
-            ; Stop at the end of the string.
-            cmp EAX, ECX
-            jae .out_of_string
-            
-            ; It's inside the string.
-            
-            ; Check current character in EAX.
-            cmp byte [EAX], 0
-            je .done_shifting
-            
-            ; Move a byte from EBX to EAX
-            mov DL, byte [EBX]
-            mov byte [EAX], DL
-            
-            inc EAX
-            inc EBX
-            jmp .shift_chars
-        
-        .out_of_string:
-        .done_shifting:
-            ; Done.
-    popad
-    ret
+	pushad
+		; Find the first non-space:
+		
+		; Start at user_input.
+		mov EAX, user_input
+		
+		; Put in EBX the user_input string end.
+		mov EBX, user_input
+		add EBX, INPUT_LIMIT
+		
+		.space:
+			; Stop at first non-space:
+			cmp byte [EAX], SPACE_CHAR
+			jne .not_space
+			
+			; Stop at the string end:
+			cmp EAX, EBX
+			jae .end_of_string
+			
+			inc EAX
+			jmp .space
+		
+		.end_of_string:
+			mov EAX, user_input
+		
+		.not_space:
+		mov EBX, EAX
+		mov EAX, user_input
+		
+		; EBX is now pointing to the first non-space character in user_input
+		;   or to the beginning of the string.
+		
+		; Put in EBX the user_input string end.
+		mov ECX, user_input
+		add ECX, INPUT_LIMIT
+		
+		.shift_chars:
+			; Stop at the end of the string.
+			cmp EAX, ECX
+			jae .out_of_string
+			
+			; It's inside the string.
+			
+			; Check current character in EAX.
+			cmp byte [EAX], 0
+			je .done_shifting
+			
+			; Move a byte from EBX to EAX
+			mov DL, byte [EBX]
+			mov byte [EAX], DL
+			
+			inc EAX
+			inc EBX
+			jmp .shift_chars
+		
+		.out_of_string:
+		.done_shifting:
+			; Done.
+	popad
+	ret
 
 ; 
 strip_end_user_input:
-    pushad
-        mov EAX, user_input
-        .scan_string_end:
-            cmp byte [EAX], 0
-            je .at_end
-            inc EAX
-            jmp .scan_string_end
-        
-        .at_end:
-            dec EAX
-            
-        .substitute_spaces:
-            ; Stop at beginning of string.
-            cmp EAX, user_input
-            jb .before_start_of_string
-            
-            ; Stop at first non space.
-            cmp byte [EAX], SPACE_CHAR
-            jne .not_space
-            
-            ; Substitute space with a zero.
-            mov byte [EAX], 0
-            dec EAX
-            jmp .substitute_spaces
-        
-        .before_start_of_string:
-        .not_space:
-            ; Trailing spaces have been replaced.
-    popad
-    ret
+	pushad
+		mov EAX, user_input
+		.scan_string_end:
+			cmp byte [EAX], 0
+			je .at_end
+			inc EAX
+			jmp .scan_string_end
+		
+		.at_end:
+			dec EAX
+			
+		.substitute_spaces:
+			; Stop at beginning of string.
+			cmp EAX, user_input
+			jb .before_start_of_string
+			
+			; Stop at first non space.
+			cmp byte [EAX], SPACE_CHAR
+			jne .not_space
+			
+			; Substitute space with a zero.
+			mov byte [EAX], 0
+			dec EAX
+			jmp .substitute_spaces
+		
+		.before_start_of_string:
+		.not_space:
+			; Trailing spaces have been replaced.
+	popad
+	ret
 
 ; This method tests the character at BL to see if spaces should be inserted around it.
 ; Affects: CF, 0 if not, 1 if yes
 ; Input: BL, character to test.
 space_test_character:
-    push BX
-    push EAX
-        cmp BL, 0
-        je .ebx_is_zero
-        
-        mov EAX, spaces_chars
-        
-        .cycle:
-            ; Stop if reached the end of spaces_chars:
-            cmp byte [EAX], 0
-            je .not_found
-            
-            cmp BL, byte [EAX]
-            je .found_char
-            
-            inc EAX
-            jmp .cycle
-        
-        .ebx_is_zero:
-            ; It's an invalid char, return false.
-            clc
-            jmp .end
-        
-         ; Return true.
-        .found_char:
-            stc
-            jmp .end
-        
-         ; Return false.
-        .not_found:
-            clc
-            jmp .end
-        
-        .end:
-    pop EAX
-    pop BX
-    ret
+	push BX
+	push EAX
+		cmp BL, 0
+		je .ebx_is_zero
+		
+		mov EAX, spaces_chars
+		
+		.cycle:
+			; Stop if reached the end of spaces_chars:
+			cmp byte [EAX], 0
+			je .not_found
+			
+			cmp BL, byte [EAX]
+			je .found_char
+			
+			inc EAX
+			jmp .cycle
+		
+		.ebx_is_zero:
+			; It's an invalid char, return false.
+			clc
+			jmp .end
+		
+		 ; Return true.
+		.found_char:
+			stc
+			jmp .end
+		
+		 ; Return false.
+		.not_found:
+			clc
+			jmp .end
+		
+		.end:
+	pop EAX
+	pop BX
+	ret
 
 
 ; Copies user_input_swap string onto user_input.
 restore_user_input:
-    push EAX
-    push EBX
-    push CX
-        ; Start at user_input, and user_input_swap.
-        mov EAX, user_input_swap
-        mov EBX, user_input
-        
-        ; Copy bytes:
-        .cycle:
-            mov EDX, user_input_swap
-            add EDX, INPUT_LIMIT
-            cmp EAX, EDX
-            ja .done ; Check if we reached the end of the string.
-            
-            ; Copy next byte:
-            mov CL, byte [EAX]
-            mov byte [EBX], CL
-            
-            ; Stop at the first 0.
-            cmp CL, 0
-            je .done
-            
-            ; Update addresses.
-            inc EAX
-            inc EBX
-            jmp .cycle
-        .done:
-            ; user_input_swap string was copied to user_input
-    pop CX
-    pop EBX
-    pop EAX
-    ret
+	push EAX
+	push EBX
+	push CX
+		; Start at user_input, and user_input_swap.
+		mov EAX, user_input_swap
+		mov EBX, user_input
+		
+		; Copy bytes:
+		.cycle:
+			mov EDX, user_input_swap
+			add EDX, INPUT_LIMIT
+			cmp EAX, EDX
+			ja .done ; Check if we reached the end of the string.
+			
+			; Copy next byte:
+			mov CL, byte [EAX]
+			mov byte [EBX], CL
+			
+			; Stop at the first 0.
+			cmp CL, 0
+			je .done
+			
+			; Update addresses.
+			inc EAX
+			inc EBX
+			jmp .cycle
+		.done:
+			; user_input_swap string was copied to user_input
+	pop CX
+	pop EBX
+	pop EAX
+	ret
 
 
 ; This method clones the string at user_input onto user_input_swap.
 clone_user_input:
-    pushad
-        ; Start at user_input, and user_input_swap.
-        mov EAX, user_input
-        mov EBX, user_input_swap
-        
-        ; Copy bytes:
-        .cycle:
-            mov EDX, user_input
-            add EDX, INPUT_LIMIT
-            cmp EAX, EDX
-            ja .done ; Check if we reached the end of the string.
-            
-            ; Copy next byte:
-            mov CL, byte [EAX]
-            mov byte [EBX], CL
-            
-            ; Stop at the first 0.
-            cmp CL, 0
-            je .done
-            
-            ; Update addresses.
-            inc EAX
-            inc EBX
-            jmp .cycle
-        .done:
-            ; user_input string was copied to user_input_swap
-    popad
-    ret
+	pushad
+		; Start at user_input, and user_input_swap.
+		mov EAX, user_input
+		mov EBX, user_input_swap
+		
+		; Copy bytes:
+		.cycle:
+			mov EDX, user_input
+			add EDX, INPUT_LIMIT
+			cmp EAX, EDX
+			ja .done ; Check if we reached the end of the string.
+			
+			; Copy next byte:
+			mov CL, byte [EAX]
+			mov byte [EBX], CL
+			
+			; Stop at the first 0.
+			cmp CL, 0
+			je .done
+			
+			; Update addresses.
+			inc EAX
+			inc EBX
+			jmp .cycle
+		.done:
+			; user_input string was copied to user_input_swap
+	popad
+	ret
 
 
 ; Check if the string at EDI is equal to the string at ESI. The main string is ESI.
