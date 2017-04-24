@@ -46,6 +46,7 @@
 		CATEGORY_VARIABLE equ 8
 		CATEGORY_INVALID equ 16
 
+
 .DATA
 	; This is the string used as prompt for the next operation:
 		cmd_prompt db "::> ", 0
@@ -156,6 +157,7 @@
 		; Complement category characters:
 		complement_chars db "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+-~ ", 0
 
+
 ; Main method:
 .CODE
     .STARTUP
@@ -240,7 +242,6 @@ process_input:
         jmp .end
     
     .end:
-	
 	ret
 
 
@@ -269,7 +270,7 @@ process_command:
 			mov EDI, cmd_exit
 			call compare_strings
 			jne .wasnt_cmd_exit
-				mov byte [running], 0
+				call stop_running
 				jmp .end_commands
 			.wasnt_cmd_exit:
 			
@@ -277,15 +278,42 @@ process_command:
 			mov EDI, cmd_about
 			call compare_strings
 			jne .wasnt_cmd_about
-				PutStr about_string
+				call print_about_info
 				jmp .end_commands
 			.wasnt_cmd_about:
+			
+			; Compare token_space to cmd_vars
+			mov EDI, cmd_vars
+			call compare_strings
+			jne .wasnt_cmd_vars
+				call print_vars
+				jmp .end_commands
+			.wasnt_cmd_vars:
 			
 			.end_commands:
 		pop EDI
 		pop ESI
     pop EAX
     ret
+
+
+print_about_info:
+	PutStr about_string
+	ret
+
+
+stop_running:
+	mov byte [running], 0
+	ret
+
+
+print_vars:
+	PutCh 'v'
+	PutCh 'a'
+	PutCh 'r'
+	PutCh 's'
+	;nwln
+	ret
 
 
 ; Moves the first token from user_input into token_space
