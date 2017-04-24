@@ -238,10 +238,18 @@ process_input:
 		jmp .end
 	
 	.process_category_variable:
-		; call process_variable
+		call process_variable_definition
 		jmp .end
 	
 	.end:
+	ret
+
+
+; This method is used to process user_input as a variable definition operation.
+process_variable_definition:
+	; Check that there is exactly one ':' character
+	; Check that there are no invalid characters
+	; Check that everything before is a single variable name
 	ret
 
 
@@ -409,6 +417,37 @@ clone_string_into:
 	pop AX
 	pop EDI
 	pop ESI
+	ret
+
+
+; Count the repetitions of the character AL, in the string EBX.
+; Returns the count in ECX
+count_repetitions_in_string:
+	push AX
+	push EBX
+		; ECX = 0
+		xor ECX, ECX
+		
+		; Count cycle:
+		.cycle:
+			; Check if the next byte is equal to AL
+			cmp byte [EBX], AL
+			jne .not_equal
+				; Increase the count
+				inc ECX
+			.not_equal:
+			
+			; Stop if the next byte is 0
+			cmp byte [EBX], 0
+			je .done
+			
+			; Next cycle:
+			inc EBX
+			jmp .cycle
+		
+		.done:
+	pop EBX
+	pop AX
 	ret
 
 
