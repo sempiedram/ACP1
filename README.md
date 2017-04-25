@@ -1,7 +1,17 @@
 
+# ACP1 - Arquitectura de Computadores, Proyecto 1
+
+Este es el primer proyecto para el curso Arquitectura de Computadores, primer semestre del 2017, con el profesor Esteban Arias, de la escuela de computación.
+
+Estudiantes: Kevin S. Piedra M. and Kristing N. Alvarado.
+
+# This repository is private
+
+This repository is private, and only us (the students) should have access to it at this time.
+
 # Analysis
 
-This is the second analysis for the first Computer Architecture project. This new analysis is because making a token data structure is too hard and it's not very productive. So, instead of using Token data structures, text will be interpreted as needed.
+This "analysis" is a guide to help develop this project. A non-complete analysis had already been produced (called analysis.md), but that one used a token data structure that is too hard and it's not very productive. So, instead of using Token data structures, text will be interpreted as needed.
 
 # New examples of operation:
 
