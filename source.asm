@@ -605,16 +605,16 @@ print_category_name:
 		; Print category name comparing category byte to the different categories:
 		mov AL, byte [category]
 		
-		cmp , CATEGORY_ARITHMETIC
+		cmp AL, CATEGORY_ARITHMETIC
 		je .process_category_arithmetic
 		
-		cmp byte [category], CATEGORY_COMMAND
+		cmp AL, CATEGORY_COMMAND
 		je .process_category_command
 		
-		cmp byte [category], CATEGORY_COMPLEMENT
+		cmp AL, CATEGORY_COMPLEMENT
 		je .process_category_complement
 		
-		cmp byte [category], CATEGORY_VARIABLE
+		cmp AL, CATEGORY_VARIABLE
 		je .process_category_variable
 		
 		; No category:
