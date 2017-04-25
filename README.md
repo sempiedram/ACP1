@@ -13,9 +13,9 @@ This repository is private, and only us (the students) should have access to it 
 
 This "analysis" is a guide to help develop this project. A non-complete analysis had already been produced (called analysis.md), but that one used a token data structure that is too hard and it's not very productive. So, instead of using Token data structures, text will be interpreted as needed.
 
-# New examples of operation:
+## New examples of operation:
 
-	5+6
+	::> 5+6
 		Processing: 5+6
 		Preprocessed: 5 + 6
 		Category: arithmetic operation
@@ -65,7 +65,7 @@ This "analysis" is a guide to help develop this project. A non-complete analysis
 				Result of sum:
 					  01011bin
 
-	10010bin-555oct=hex
+	::> 10010bin-555oct=hex
 		10010bin - 555oct = hex
 		find base:
 			= hex
@@ -91,7 +91,7 @@ This "analysis" is a guide to help develop this project. A non-complete analysis
 			
 		11111111111111111111111110100101bin = hex
 
-	5+4*9=hex
+	::> 5+4*9=hex
 		5 + 4 * 9 = hex
 		find base:
 			= hex
@@ -123,7 +123,7 @@ This "analysis" is a guide to help develop this project. A non-complete analysis
 		0101001bin
 		end.
 
-	7-1bin
+	::> 7-1bin
 		Processing: "7-1bin"
 		Preprocessed: "7 - 1bin"
 		Category: Arithmetic
@@ -181,7 +181,7 @@ This "analysis" is a guide to help develop this project. A non-complete analysis
 		
 		Result: 6dec
 
-	7-(5+4)
+	::> 7-(5+4)
 		Processing: "7-(5+4)"
 		Preprocessed: "7 - ( 5 + 4 )"
 		Category: arithmetic
