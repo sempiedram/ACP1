@@ -3,7 +3,7 @@
 
 Este es el primer proyecto para el curso Arquitectura de Computadores, primer semestre del 2017, con el profesor Esteban Arias, de la escuela de computación.
 
-Estudiantes: Kevin S. Piedra M. and Kristing N. Alvarado.
+Estudiantes: Kevin S. Piedra M. and Kristin N. Alvarado.
 
 # This repository is private
 

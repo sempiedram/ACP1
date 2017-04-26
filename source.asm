@@ -92,7 +92,7 @@
 			"	2", 10,\
 			"  Estudiantes:", 10,\
 			"	Kevin Sem Piedra Matamoros", 10,\
-			"	Kristing Nicole Alvarado ", 10,\
+			"	Kristin Nicole Alvarado ", 10,\
 			"  Year:", 10,\
 			"	2017", 10, 0
 	
