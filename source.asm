@@ -87,7 +87,7 @@
 			"  - Sede de Cartago", 10,\
 			"  - Primer proyecto", 10, 10,\
 			"  Profesor:", 10,\
-			"	Esteban Arias", 10,\
+			"	Esteban Arias Mendez", 10,\
 			"  Grupo:", 10,\
 			"	2", 10,\
 			"  Estudiantes:", 10,\
