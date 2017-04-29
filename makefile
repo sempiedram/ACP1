@@ -9,7 +9,7 @@ run: source
 	./source
 
 clean:
-	rm source.o
-	rm source
+	rm -f source.o
+	rm -f source
 
 
