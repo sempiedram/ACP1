@@ -7,6 +7,7 @@
 %include  "user_input.asm"
 %include  "variables.asm"
 %include  "categories.asm"
+%include  "commands.asm"
 
 
 ; equ definitions:
