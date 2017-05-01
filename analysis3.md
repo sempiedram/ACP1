@@ -82,6 +82,14 @@ The algorithm to add a new definition is:
 2. Write the variable name string.
 3. Write the variable value string.
 
+## Variable names
+
+Variable names have the following restrictions:
+
+1. Can't be the empty string.
+2. Are only composed of the characters "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".
+3. They cannot be valid numbers. There is an intersection between valid numbers, and valid variable names, namely, the hexadecimal numbers that have no decimal digits ("0123456789"). For example: "BABEhex", "COFFEEhex", etc. This allows expressions to be less misleading, as number behaviour will work as expected.
+
 # Processing: Arithmetic operation
 
 Arithmetic operations are the hardest to process.
@@ -101,6 +109,21 @@ These steps are each rather complex, and have certain details. These details are
 
 ## Arithmetic operation: Variable expansion
 
+The pseudocode for variable expansion is:
+
+	for every token in the expression {
+		if token is a valid variable name {
+			if token is a valid number {
+				continue to next token
+			}
+	
+			if that variable is defined {
+				replace the variable's name with its value
+			}else {
+				raise an error, this token has no meaning
+			}
+		}
+	}
 
 # Processing: Command
 
