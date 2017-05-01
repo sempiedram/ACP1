@@ -154,7 +154,13 @@ The "result base" is the base in which the final result of the expression should
 
 ## Arithmetic operation: Valid arithmetic operations
 
+Arithmetic expressions are valid if the following statements are true:
 
+1. All tokens are either valid numbers or valid operators.
+2. All operators have exactly their required number of operands.
+3. All parenthesis are properly matched.
+
+However, only the first statement is checked in this step. The other two are properly checked in a later step (probably in the "convert the expression into postfix" step). Parenthesis matching can be checked here, but only superficially (because otherwise it would be easier just to evaluate the expression now). So in this step it's only checked that ever token is either a valid number or an operator.
 
 # Processing: Command
 
