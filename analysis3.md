@@ -190,16 +190,34 @@ The conversion algorithm should be:
 
 At this point, the expression is composed of: binary numbers, operators ("+-\*/"), and parenthesis. The expression may or may not be valid, structurally.
 
+The next algorithm takes into accout the possibility that a minus sign ('-') can be used to indicate "negate", or the "minus" operations. This is determined by checking the previous token to the '-' symbol, if the previous token is a number, then the '-' is a subtraction operation, if it's not, then the '-' means "negate the following number" (so the next token must be equivalent to a number, such as a number or a parenthesis group). For this, the "previous was a number" variable is used. Initially, its value is false, and then it is updated after every token depending if the token was a number or not. Only numbers and closing parenthesis are considered numbers.
+
 The general algorithm is:
+
+	previous was number = false
 
 	for every token in the expression {
 		if token is a number {
 			add it to the new expression
-
+			previous was number = true
 		}else {
+			previous was number = false
 			if token is an operator {
 				if the stack is empty {
-					place it there
+					push token into stack
+				}else {
+					if token is '-' {
+						if previous was not number {
+							token = '~' ; It's a negation.
+						}
+					}
+					compare token precedence to top of the stack operation precedence
+					if precedence > top operation precedence {
+						push token into stack
+					}else {
+						pop top operation and add it to the new expression
+						push token into stack
+					}
 				}
 			}else {
 				if token is open parenthesis {
@@ -209,6 +227,7 @@ The general algorithm is:
 					while next token in stack is not open parenthesis and the stack is not empty {
 						pop operator and put it on the new expression
 					}
+					previous was number = true
 				}
 			}
 		}
