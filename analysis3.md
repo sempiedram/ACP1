@@ -174,6 +174,17 @@ The result base extraction algorithm is:
 3. Check that it's a valid base: bin, oct, dec, or hex. If it's not, raise an error with that token.
 4. Save that base somewhere.
 
+## Arithmetic operation: Convert all numbers into binary
+
+This is done by checking every token, if the token is a valid number, convert it and replace it in the expression.
+
+The conversion algorithm should be:
+
+1. If the number's base is binary, just ignore it.
+2. If the number's base is octal, expand every octal digit to their binary equivalent. Trim extra sign bits (e.g. "00001011" -> "01011").
+3. If the number's base is decimal, divide repeatedly.
+4. If the number's base is hexadecimal, expand every hexadecimal digit to their binary equivalent. Trim extra sign bits (e.g. "1111010" -> "1010").
+
 # Processing: Command
 
 A command is an expression that starts with a '#' (called the "command identification character"). After that character, the first token (e.g. in "#about", that is turned into "# about" after preprocessing, the next token after the '#' is "about") is called the "command name" or simply "command". The "command name" determines what should be done.
