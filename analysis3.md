@@ -120,6 +120,7 @@ The pseudocode for variable expansion is:
 		
 				if that variable is defined {
 					replace the variable's name with its value
+					do a normal preprocessing
 				}else {
 					raise an error, this token has no meaning
 				}
