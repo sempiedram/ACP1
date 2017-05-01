@@ -185,6 +185,40 @@ The conversion algorithm should be:
 3. If the number's base is decimal, divide repeatedly.
 4. If the number's base is hexadecimal, expand every hexadecimal digit to their binary equivalent. Trim extra sign bits (e.g. "1111010" -> "1010").
 
+## Arithmetic operation: Convert the expression into postfix
+
+At this point, the expression is composed of: binary numbers, operators ("+-\*/"), and parenthesis. The expression may or may not be valid, structurally.
+
+The general algorithm is:
+
+	for every token in the expression {
+		if token is a number {
+			add it to the new expression
+
+		}else {
+			if token is an operator {
+				if the stack is empty {
+					place it there
+				}
+			}else {
+				if token is open parenthesis {
+					place it in the stack
+				}else {
+					; Token is close parenthesis
+					while next token in stack is not open parenthesis and the stack is not empty {
+						pop operator and put it on the new expression
+					}
+				}
+			}
+		}
+	}
+
+	while stack is not empty {
+		pop operator and put it in the new expression
+	}
+
+Which is rather big, but it's the core of the evaluation of arithmetic expressions.
+
 # Processing: Command
 
 A command is an expression that starts with a '#' (called the "command identification character"). After that character, the first token (e.g. in "#about", that is turned into "# about" after preprocessing, the next token after the '#' is "about") is called the "command name" or simply "command". The "command name" determines what should be done.
