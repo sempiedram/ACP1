@@ -111,19 +111,27 @@ These steps are each rather complex, and have certain details. These details are
 
 The pseudocode for variable expansion is:
 
-	for every token in the expression {
-		if token is a valid variable name {
-			if token is a valid number {
-				continue to next token
-			}
-	
-			if that variable is defined {
-				replace the variable's name with its value
-			}else {
-				raise an error, this token has no meaning
+	while there are valid variable names in the expression {
+		for every token in the expression {
+			if token is a valid variable name {
+				if token is a valid number {
+					continue to next token
+				}
+		
+				if that variable is defined {
+					replace the variable's name with its value
+				}else {
+					raise an error, this token has no meaning
+				}
 			}
 		}
 	}
+
+This ensures that:
+1. If there is an undefined variable name, an error will be generated.
+2. If a variable that contained a variable name was in the expression, the second will also be expanded.
+
+To be handled: variable recursion.
 
 ## Arithmetic operation: Arithmetic preprocessing
 
@@ -143,6 +151,10 @@ This is done by checking every token to see if they are valid decimal numbers, a
 ### Point 2 - Result base
 
 The "result base" is the base in which the final result of the expression should be presented. The default result base is decimal. This base is indicated using the following format: "<expression> = <result base>". Therefore, if there is not already an explicit result base, the string " = dec" should be added at the end of the expression.
+
+## Arithmetic operation: Valid arithmetic operations
+
+
 
 # Processing: Command
 
