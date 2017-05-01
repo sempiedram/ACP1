@@ -55,6 +55,33 @@ The check_category algorithm should be:
 
 After determining the category of the expression, then it can be used to execute different methods. This category byte is used by the process_input method to call the right handler.
 
+# Variables
+
+Variables are defined using "variable definition" operations. These variables are names used to refer to expressions that can be inserted into other expressions. As variables are expressions, and variables can be put in expressions, recursive variables can be defined. However, this should be taken as an error, because it would be infinite recursion.
+
+A design choice was made to use variables as just text that is replaced into expressions. The other option was to store variables as just their numerical value, but it seems too limited.
+
+Variables are to be stored in the variables_space byte field, of size VARIABLES_SIZE.
+
+The format they will have is: <variable_name>0<variable_value>0<...>, where variable_name is the name of the variable, and variable_value is it's value. Both are C-style strings (represented by the zeroes). For each variable defined there would be one such pair of strings in variables_space.
+
+The algorithm to set a variable is:
+
+1. Remove any previous definition, if it exists.
+2. Add new definition.
+
+The algorithm to remove previous variable definitions is:
+
+1. Look for the variable definition, if it doesn't exist return.
+2. Find the limits of the definition.
+3. Move the part of variables_space back, covering that definition.
+
+The algorithm to add a new definition is:
+
+1. Find the next space in variables_space, which is identified by two bytes with value 0 next to each other (variable names, nor values, can be empty strings).
+2. Write the variable name string.
+3. Write the variable value string.
+
 # Processing: Arithmetic operation
 
 Arithmetic operations are the hardest to process.
