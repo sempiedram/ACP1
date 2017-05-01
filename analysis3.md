@@ -125,6 +125,25 @@ The pseudocode for variable expansion is:
 		}
 	}
 
+## Arithmetic operation: Arithmetic preprocessing
+
+Arithmetic expressions should have a certain format; this format is enforced by this preprocessing step.
+
+The format requires the following:
+
+1. All numbers have their explicit base.
+2. The "result base" is explicitly defined.
+
+### Point 1 - Default base
+
+The default base, as required in the specification for the project, is decimal ("dec"). Therefore, all numbers that don't have a base should get the "dec" base by default.
+
+This is done by checking every token to see if they are valid decimal numbers, and see also if they don't have an explicit base (i.e. only have the characters "0123456789"). If that's the case then the string "dec" is added as a postfix (e.g.: "5" -> "5dec").
+
+### Point 2 - Result base
+
+The "result base" is the base in which the final result of the expression should be presented. The default result base is decimal. This base is indicated using the following format: "<expression> = <result base>". Therefore, if there is not already an explicit result base, the string " = dec" should be added at the end of the expression.
+
 # Processing: Command
 
 A command is an expression that starts with a '#' (called the "command identification character"). After that character, the first token (e.g. in "#about", that is turned into "# about" after preprocessing, the next token after the '#' is "about") is called the "command name" or simply "command". The "command name" determines what should be done.
