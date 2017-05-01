@@ -165,6 +165,15 @@ However, only the first statement is checked in this step. The other two are pro
 
 Besides those, an arithmetic expression needs to have exactly one base result definition, indicated by the '=' character. The next token after the '=' must be a valid base: bin, oct, dec, or hex.
 
+## Arithmetic operation: Extract result base
+
+The result base extraction algorithm is:
+
+1. Find the '=' character. If it's not in the expression, raise an error.
+2. Check that there is exactly one token after it. If there's none, raise an error (although this should not be necessary, because of arithmetic preprocessing). If there's more than one, raise an error indicating so.
+3. Check that it's a valid base: bin, oct, dec, or hex. If it's not, raise an error with that token.
+4. Save that base somewhere.
+
 # Processing: Command
 
 A command is an expression that starts with a '#' (called the "command identification character"). After that character, the first token (e.g. in "#about", that is turned into "# about" after preprocessing, the next token after the '#' is "about") is called the "command name" or simply "command". The "command name" determines what should be done.
