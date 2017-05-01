@@ -105,6 +105,7 @@ The general algorithm is:
 7. Evaluate the postfix expression. The result should be the only number in the "postfix evaluation stack" (if the expression was valid).
 8. Convert the resulting number from binary into the result base.
 
+The points 1, 2, 3, 4, 5, 6, and 7 can all generate errors.
 These steps are each rather complex, and have certain details. These details are shown next.
 
 ## Arithmetic operation: Variable expansion
