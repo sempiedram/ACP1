@@ -57,6 +57,24 @@ After determining the category of the expression, then it can be used to execute
 
 # Processing: Arithmetic operation
 
+Arithmetic operations are the hardest to process.
+
+The general algorithm is:
+
+1. Expand variables.
+2. Do the arithmetic preprocessing.
+3. Check that it's a valid arithmetic expression.
+4. Extract from the expression the result base.
+5. Convert every number into binary.
+6. Convert the expression into postfix.
+7. Evaluate the postfix expression.
+8. Done. The result should be the only number in the "postfix evaluation stack" (if the expression was valid).
+
+These steps are each rather complex, and have certain details. These details are shown next.
+
+## Arithmetic operation: Variable expansion
+
+
 # Processing: Command
 
 A command is an expression that starts with a '#' (called the "command identification character"). After that character, the first token (e.g. in "#about", that is turned into "# about" after preprocessing, the next token after the '#' is "about") is called the "command name" or simply "command". The "command name" determines what should be done.
