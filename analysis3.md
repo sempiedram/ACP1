@@ -209,6 +209,8 @@ The general algorithm is:
 					if token is '-' {
 						if previous was not number {
 							token = '~' ; It's a negation.
+							add token to new expression
+							continue with next token
 						}
 					}
 					compare token precedence to top of the stack operation precedence
