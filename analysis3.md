@@ -219,6 +219,34 @@ The general algorithm is:
 
 Which is rather big, but it's the core of the evaluation of arithmetic expressions.
 
+## Arithmetic operation: Evaluation of the postfix expression
+
+This part of the process is where the evaluation of the expression actually happens. The evaluation is done using the previously created "postfix expression" which should be equivalent to the original expression. The postfix expression is guaranteed to have only valid numbers in binary, and valid operations (although, there could be a mismatch between operations and number of operands).
+
+This evaluation process requires the use of a "operand stack", which is where the operands are placed and taken from as each token in the expression is read.
+
+The algorithm is basically:
+
+	operands stack = empty stack
+	for every token in the postfix expression {
+		if token is number {
+			place it in the stack
+		} else {
+			; The token is an operation.
+
+			; n is the number of operands the operation needs (1, or 2)
+			take n operands from the stack
+
+			do operation
+			push result into the stack
+		}
+	}
+	return the last operand in the stack as the final result
+
+At the end of this algorithm, the stack should have exactly one operand left, which is the value of the whole expression. If there is either no operands left (the expression was empty), or multiple operands (the expression was malformed, such as: "5 5 + 3"), then an error should be raised saying so.
+
+Another error that can happen is that an operation requires n operands, but there are less than n operands in the stack. This should be properly detected, and displayed. 
+
 # Processing: Command
 
 A command is an expression that starts with a '#' (called the "command identification character"). After that character, the first token (e.g. in "#about", that is turned into "# about" after preprocessing, the next token after the '#' is "about") is called the "command name" or simply "command". The "command name" determines what should be done.
