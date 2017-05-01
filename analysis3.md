@@ -102,8 +102,8 @@ The general algorithm is:
 4. Extract from the expression the result base.
 5. Convert every number into binary.
 6. Convert the expression into postfix.
-7. Evaluate the postfix expression.
-8. Done. The result should be the only number in the "postfix evaluation stack" (if the expression was valid).
+7. Evaluate the postfix expression. The result should be the only number in the "postfix evaluation stack" (if the expression was valid).
+8. Convert the resulting number from binary into the result base.
 
 These steps are each rather complex, and have certain details. These details are shown next.
 
@@ -246,6 +246,17 @@ The algorithm is basically:
 At the end of this algorithm, the stack should have exactly one operand left, which is the value of the whole expression. If there is either no operands left (the expression was empty), or multiple operands (the expression was malformed, such as: "5 5 + 3"), then an error should be raised saying so.
 
 Another error that can happen is that an operation requires n operands, but there are less than n operands in the stack. This should be properly detected, and displayed. 
+
+## Arithmetic operation: Conversion from binary to result base
+
+The resulting number needs to be converted to the result base, which was specified with " = <base>".
+
+This is the basic algorithm:
+
+1. If the result base is bin, just return the same number.
+2. If the result base is oct, extend the bits of the number until it has a length that is a multiple of 3. Then, for each group of three bits, write the corresponding octal digit. Finally, add the "oct" sufix.
+3. If the result base is dec, multiply the first bit by -2^(n-1) (where n is the number of bits in the number), and to that add every other bit times 2^m (where m is their position, from 0 to n-2) (this requires that all binary numbers have at least two bits). Then, add the "dec" sufix and return.
+4. If the result base is hex, do the same as with oct, but with groups of four bits.
 
 # Processing: Command
 
