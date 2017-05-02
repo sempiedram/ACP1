@@ -1,14 +1,15 @@
 
 
 %include  "io.mac"
+
+%include  "arithmetic.asm"
+%include  "categories.asm"
+%include  "commands.asm"
 %include  "identation.asm"
 %include  "strings.asm"
 %include  "tokens.asm"
 %include  "user_input.asm"
 %include  "variables.asm"
-%include  "categories.asm"
-%include  "commands.asm"
-%include  "arithmetic.asm"
 
 
 ; equ definitions:
@@ -77,6 +78,9 @@
 		
 		; Strings for the process_command method:
 		str_process_command db "Process command: '", 0
+		
+		; For showing the found result base:
+		str_found_result_base db "Result base: '", 0
 	
 		; String for categories:
 		category_info db "Operation category: ", 0
@@ -131,6 +135,9 @@
 	
 	; This byte holds the category computed by the check_category method:
 		category db 0
+		
+	; This byte holds what base to convert the result of arithmetic operations. 0 means invalid, 2 means binary, 8 means octal, 10 means decimal, 16 means hexadecimal, and any other value is not valid.
+		result_base db 0
 
 	; Commands (that start with #) recognized:
 		cmd_exit db "exit", 0
@@ -138,6 +145,7 @@
 		cmd_about db "about", 0
 	
 	; Base strings:
+		invalid_base_identifier db "invalid", 0 ; This one is used to display that a base is invalid.
 		binary_base_identifier db "bin", 0
 		octal_base_identifier db "oct", 0
 		decimal_base_identifier db "dec", 0

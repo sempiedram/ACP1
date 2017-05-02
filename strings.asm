@@ -66,6 +66,37 @@ find_character:
 	ret
 
 
+; This method looks for the character in AL in the string pointed to by EBX, and returns the position of the character in ECX. If the character is not found, then it returns -1 in ECX.
+find_character_position:
+	push EBX
+		.cycle:
+			; Stop if reached the end of the string.
+			cmp byte [EBX], 0
+			je .not_found
+			
+			; Stop if found the character.
+			cmp byte [EBX], AL
+			je .found
+			
+			; Check next byte:
+			inc EBX
+			jmp .cycle
+			
+		.found:
+			; Return the position of the character.
+			mov ECX, EBX
+			jmp .end
+		
+		.not_found:
+			; Return -1
+			mov ECX, -1
+			jmp .end
+		
+		.end:
+	pop EBX
+	ret
+
+
 ; Removes from the string in address EAX the characters up to EBX, and moves the rest of the string accordingly.
 cut_up_to:
 	push EBX
