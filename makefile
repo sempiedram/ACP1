@@ -1,8 +1,10 @@
 
+SOURCE_FILES = arithmetic.asm categories.asm commands.asm identation.asm source.asm strings.asm tokens.asm user_input.asm variables.asm
+
 source: source.o io.o
 	ld -m elf_i386 source.o io.o -o source
 
-source.o: source.asm
+source.o: $(SOURCE_FILES) 
 	nasm -f elf source.asm -o source.o
 
 run: source
