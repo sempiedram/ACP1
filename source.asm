@@ -8,6 +8,7 @@
 %include  "variables.asm"
 %include  "categories.asm"
 %include  "commands.asm"
+%include  "arithmetic.asm"
 
 
 ; equ definitions:
@@ -247,7 +248,7 @@ process_input:
 	je .process_category_variable
 	
 	.process_category_arithmetic:
-		; call process_arithmetic
+		call process_arithmetic
 		jmp .end
 	
 	.process_category_command:
