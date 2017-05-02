@@ -152,11 +152,13 @@ This is done by checking every token to see if they are valid decimal numbers, a
 
 ### Point 2 - Result base
 
+An arithmetic expression needs to have exactly one base result definition, indicated by the '=' character. The next token after the '=' must be a valid base: bin, oct, dec, or hex. This must be checked here.
+
 The "result base" is the base in which the final result of the expression should be presented. The default result base is decimal. This base is indicated using the following format: "<expression> = <result base>". Therefore, if there is not already an explicit result base, the string " = dec" should be added at the end of the expression.
 
 ## Arithmetic operation: Valid arithmetic operations
 
-Arithmetic expressions are valid if the following statements are true for the expression beforethe base result definition:
+Arithmetic expressions are valid if the following statements are true for the expression before the base result definition:
 
 1. All tokens are either valid numbers or valid operators.
 2. All operators have exactly their required number of operands.
@@ -164,16 +166,19 @@ Arithmetic expressions are valid if the following statements are true for the ex
 
 However, only the first statement is checked in this step. The other two are properly checked in a later step (probably in the "convert the expression into postfix" step). Parenthesis matching can be checked here, but only superficially (because otherwise it would be easier just to evaluate the expression now). So in this step it's only checked that ever token is either a valid number or an operator.
 
-Besides those, an arithmetic expression needs to have exactly one base result definition, indicated by the '=' character. The next token after the '=' must be a valid base: bin, oct, dec, or hex. This is checked in the next point (extraction of result base).
-
 ## Arithmetic operation: Extract result base
+
+At this point, the expression must have the following format:
+
+	<arithmetic expression> = <base>
+
+Where arithmetic expression is composed only of valid tokens (but might not be a valid expression. And base is one of: "bin", "oct", "dec", or "hex".
 
 The result base extraction algorithm is:
 
-1. Find the '=' character. If it's not in the expression, raise an error.
-2. Check that there is exactly one token after it. If there's none, raise an error (although this should not be necessary, because of arithmetic preprocessing). If there's more than one, raise an error indicating so.
-3. Check that it's a valid base: bin, oct, dec, or hex. If it's not, raise an error with that token.
-4. Save that base somewhere.
+1. Find the '=' character.
+2. Check that the next token is a valid base: bin, oct, dec, or hex. If it's not, raise an error.
+3. Save that base in the result_base byte as 2 for "bin", 8 for "oct", 10 for "dec", 16 for "hex", and 0 for invalid bases.
 
 ## Arithmetic operation: Convert all numbers into binary
 
