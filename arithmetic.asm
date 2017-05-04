@@ -25,6 +25,13 @@ process_arithmetic:
 	
 		call extract_result_base
 		
+		cmp byte [error_code], NO_ERROR
+		je .no_error_4
+			; Error extracting the base.
+			call handle_error
+			jmp .end
+		.no_error_4:
+		
 		; Print the result base:
 		call print_identation
 		PutStr str_found_result_base
@@ -39,6 +46,13 @@ process_arithmetic:
 	; 6. Convert the expression into postfix.
 	
 		call convert_to_postfix
+		
+		cmp byte [error_code], NO_ERROR
+		je .no_error_6
+			; Error extracting the base.
+			call handle_error
+			jmp .end
+		.no_error_6: ; No error in step 6
 		
 		; Print the resulting postfix expression.
 		
@@ -56,6 +70,7 @@ process_arithmetic:
 	
 		; call convert_final_result
 	
+	.end:
 	call decrease_identation_level
 	ret
 
@@ -103,7 +118,18 @@ extract_result_base:
 			; Now string_a is just "<base>"
 			mov ESI, string_a
 			call get_base_from_string
-			; Now AL = 2, 8, or 16
+			
+			cmp AL, 0 ; Check if the base was not recognized.
+			jne .was_recognized
+				; Indicate that there was an error.
+				mov byte [error_code], ERROR_INVALID_BASE
+				
+				; Add as extra info the address of the received base string.
+				mov dword [error_extra_info2], ESI
+				
+			.was_recognized:
+			
+			; Now AL = 0, 2, 8, or 16
 			
 			; Store the base that was found.
 			mov byte [result_base], AL
@@ -111,6 +137,7 @@ extract_result_base:
 		.not_found:
 			; The '=' was not found. This should not happen.
 			; Raise an error, and return.
+			mov byte [error_code], ERROR_NO_RESULT_BASE_INDICATOR
 			jmp .end
 		
 		.end:
@@ -267,7 +294,15 @@ convert_to_postfix:
 			jne .not_number
 			
 				; We could check here if the previous token was also a number, which
-				; would mean that there is an error in the expression (e.g.: "4 5 + 1").
+				; would mean that there is an error in the expression (e.g.: "4 5 + 1", or "2 + (3 * 2) 7").
+				
+				mov AL, byte [previous_was_number]
+				test AL, AL
+				jz .not_numbers_together
+					mov byte [error_code], ERROR_INVALID_EXPRESSION
+					mov byte [error_extra_info], REASON_NUMBERS_TOGETHER
+					jmp .end
+				.not_numbers_together:
 			
 				; add it to the new expression
 				call push_token_to_expression
@@ -379,6 +414,7 @@ convert_to_postfix:
 						
 							; raise error saying so
 							mov byte [error_code], ERROR_INVALID_TOKEN
+							mov dword [error_extra_info2], token_space
 							jmp .end
 							
 						; }

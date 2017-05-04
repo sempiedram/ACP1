@@ -87,6 +87,15 @@
 		
 		; Signals that the indicated base was not recognized.
 		ERROR_INVALID_BASE equ 3
+		
+		; Signals that the expression doesn't have a result base indicator.
+		ERROR_NO_RESULT_BASE_INDICATOR equ 4
+		
+		; The expression is invalid.
+		ERROR_INVALID_EXPRESSION equ 5
+		
+			; The expression is invalid because two numbers were together.
+			REASON_NUMBERS_TOGETHER equ 6
 
 
 .DATA
@@ -142,7 +151,11 @@
 			"	2017", 10, 0
 		
 		; Error strings:
-			error_invalid_token_message db "The following token is not valid: '", 0
+			str_error_invalid_token db "The following token is not valid: '", 0
+			str_error_invalid_expression db "The expression given is invalid.", 0
+			str_error_invalid_base db "The base given was not recognized: '", 0
+			str_reason_numbers_together db "Two numbers were next to each other in the expression.", 0
+			str_error_no_base_indicator db "The expression doesn't have a base result indicator.", 0
 	
 	; String memory spaces:
 		; This is the string space for user input
@@ -182,7 +195,7 @@
 		; For example, the address of a string that is relevant to the error.
 		; Or the index of the character that was problematic.
 			error_extra_info db 0
-			error_extra_info2 db 0
+			error_extra_info2 dd 0
 		
 	; This byte holds the category computed by the check_category method:
 		category db 0
@@ -263,6 +276,7 @@
 			jmp .read_cmd
 
 		.end:
+			call print_about_info
 			; Print the end message:
 			PutStr finish_msg
 			nwln
@@ -340,5 +354,77 @@ preprocess:
 	
 	; Strip end and beginning spaces:
 	call strip_user_input
+	ret
+
+; General error handling method.
+handle_error:
+	cmp byte [error_code], ERROR_NO_RESULT_BASE_INDICATOR
+	jne .not_base_indicator
+		; Inform that no base indicator was present in the expression.
+		call print_identation
+		PutStr str_error_no_base_indicator
+		nwln
+		jmp .end
+	.not_base_indicator:
+	
+	cmp byte [error_code], ERROR_INVALID_TOKEN
+	jne .not_invalid_token
+		call print_identation
+		PutStr str_error_invalid_token
+		PutStr [error_extra_info2]
+		PutStr str_close_string
+		nwln
+		jmp .end
+	.not_invalid_token:
+	
+	cmp byte [error_code], ERROR_INVALID_BASE
+	jne .not_invalid_base
+		call print_identation
+		PutStr str_error_invalid_base
+		PutStr [error_extra_info2]
+		PutStr str_close_string
+		nwln
+		jmp .end
+	.not_invalid_base:
+	
+	cmp byte [error_code], ERROR_INVALID_EXPRESSION
+	jne .not_invalid_expression
+		call print_identation
+		PutStr str_error_invalid_expression
+		nwln
+		
+		call print_invalid_expression_reason
+		jmp .end
+	.not_invalid_expression:
+	
+	; cmp byte [error_code], ERROR_
+	; jne .not_
+		; PutStr str_error_
+		; PutStr [error_extra_info]
+		; PutStr str_close_string
+		; nwln
+		; jmp .end
+	; .not_:
+	
+	.end:
+		; Reset error_code
+		mov byte [error_code], NO_ERROR
+	ret
+
+
+print_invalid_expression_reason:
+	call print_identation
+	push AX
+		mov AL, byte [error_extra_info]
+		
+		cmp AL, REASON_NUMBERS_TOGETHER
+		jne .not_numbers_together
+			PutStr str_reason_numbers_together
+			jmp .end
+		.not_numbers_together:
+		
+		.end:
+		nwln
+	pop AX
 	ret
 
