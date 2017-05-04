@@ -41,6 +41,26 @@ The program will stop when the cycle is stopped. The cycle is controlled by chec
 
 When the cycle is broken, a "goodbye" message is displayed, and then the program is closed.
 
+# Error handling
+
+Errors can be indicated through the use of a variable that is checked at appropriate times. This variable is a byte named error_code. The error_code byte has a value of NO_ERROR (a constant) initially, and as long as it has that value, it's considered that no error has ocurred (or has been raised) in the program.
+
+Other possible values are:
+- ERROR_INVALID_TOKEN: Indicates that an invalid token was found in the expression.
+- ERROR_UNMATCHED_PARENTHESIS: Incomplete pairs of parenthesis.
+- ERROR_INVALID_BASE: An unidentified base was given to the program.
+
+Besides the error_code byte, two other bytes are set aside for error handling: error_extra_info, and error_extra_info2. These two bytes can be used to "pass" extra information relevant to the error, for example: the address of a string, the number of unmatched strings, the unrecognized character, etc.
+
+Checking for error should be done using the NO_ERROR constant, for example:
+	
+	cmp byte [error_code], NO_ERROR
+	je .no_error
+		call handle_error
+	.no_error:
+
+The error can then be handled by a general error handling procedure, or a custom procedure can be written specifically for that point of the program.
+
 # Category determination
 
 The category is mainly determined by what characters are found in the user_input string. The method that does this is called check_category, which returns what category the string was through the byte called "category". The values of that byte are: CATEGORY_ARITHMETIC, CATEGORY_COMMAND, CATEGORY_COMPLEMENT, CATEGORY_VARIABLE, and CATEGORY_INVALID. These constants have specific distinct numerical values, but the numerical values should not be used, only their names as they could be changed.
