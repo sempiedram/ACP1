@@ -7,6 +7,9 @@ copy_to_token:
 		; EDX keeps the address of where to copy the next byte.
 		mov EDX, token_space
 		
+		; Make sure that token_space is empty:
+		mov byte [EDX], 0
+		
 		.cycle:
 			; Stop when reached the EBX address
 			cmp EAX, EBX
