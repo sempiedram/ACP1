@@ -140,6 +140,9 @@
 			"	Kristin Nicole Alvarado ", 10,\
 			"  Year:", 10,\
 			"	2017", 10, 0
+		
+		; Error strings:
+			error_invalid_token_message db "The following token is not valid: '", 0
 	
 	; String memory spaces:
 		; This is the string space for user input
