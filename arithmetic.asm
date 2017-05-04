@@ -217,124 +217,204 @@ get_base_from_string:
 ; This method assumes that the expression in user_input only has tokens that are valid binary numbers, operators, or parenthesis, and that the pairs of parenthesis are matched.
 
 ; TODO list:
-; - In all appropriate pop calls, check that the stack was not empty.
-; - In all appropriate closing keys ('}'), do a jmp .next_cycle.
 ; - [Too hard], check that there still is space to push things.
 
 convert_to_postfix:
-	; Save a copy of user_input
-	call clone_user_input
-	
-	; Clear stack and expression.
-	mov byte [stack_space], 0
-	mov byte [expression_space], 0
-	
-	; previous was number = false
-	mov byte [previous_was_number], 0
-	
-	; while there are tokens in the expression {
-		; token = take first token of the expression
-	.cycle:
-	call get_first_token
-	cmp byte [token_space], 0
-	je .tokens_done
+	push EAX
+	push EBX
+		; Save a copy of user_input
+		call clone_user_input
 		
-		; if token is '-' {
-		cmp byte [token_space], SUBTRACTION_OPERATION_CHAR
-		jne .not_minus
+		; Clear stack and expression.
+		mov byte [stack_space], 0
+		mov byte [expression_space], 0
+		
+		; previous was number = false
+		mov byte [previous_was_number], 0
+		
+		; while there are tokens in the expression {
+			; token = take first token of the expression
+		.cycle:
+		call get_first_token
+		cmp byte [token_space], 0 ; If there are no more tokens, end cycle.
+		je .tokens_done
 			
-			; if previous was not number {
-			mov AL, byte [previous_was_number]
-			test AL, AL
-			jnz .previous_not_number_subtraction
+			; if token is '-' {
+			cmp byte [token_space], SUBTRACTION_OPERATION_CHAR
+			jne .not_minus
 			
-				; ; It's a negation.
-				; token = '~'
-				mov byte [token_space], COMPLEMENT_CHAR
+			; Check that the token is only "-".
+			cmp byte [token_space + 1], 0
+			jne .not_minus
+				
+				; if previous was not number {
+				mov AL, byte [previous_was_number]
+				test AL, AL
+				jnz .previous_not_number_subtraction
+				
+					; ; It's a negation.
+					; token = '~'
+					mov byte [token_space], COMPLEMENT_CHAR
+					
+				; }
+				.previous_not_number_subtraction:
 				
 			; }
-			.previous_not_number_subtraction:
+			.not_minus:
 			
-		; }
-		.not_minus:
-		
-		; if token is a number {
-		call is_token_binary_number
-		jne .not_number
-		
-			; add it to the new expression
-			call push_token_to_expression
+			; if token is a number {
+			call is_token_binary_number
+			jne .not_number
 			
-			; previous was number = true
-			mov byte [previous_was_number], 1
+				; We could check here if the previous token was also a number, which
+				; would mean that there is an error in the expression (e.g.: "4 5 + 1").
+			
+				; add it to the new expression
+				call push_token_to_expression
 				
-			; continue with next token
-			jmp .next_cycle
-			
-		; }else {
-		.not_number:
-		
-			; previous was number = false
-			mov byte [previous_was_number], 0
-			
-			; if token is an operator {
-			call is_token_operator
-			jne .not_operator
-			
-				; if the stack is empty {
-				call is_stack_empty
-				jne .stack_not_empty
+				; previous was number = true
+				mov byte [previous_was_number], 1
+					
+				; continue with next token
+				jmp .next_cycle
 				
-					; push token into stack
-					call push_token_to_stack
+			; }else {
+			.not_number:
+			
+				; previous was number = false
+				mov byte [previous_was_number], 0
 				
-					; continue with next token
-					jmp .next_cycle
-					
-				; }else {
-				.stack_not_empty:
+				; if token is an operator {
+				call is_token_operator
+				jne .not_operator
 				
-					; ; compare token precedence to top of the stack operation precedence
-					
-					; top token = peek top token
-					call clone_token
-					call peek_token_from_stack
-					
-					; top precedence = top token precedence
-					call token_precedence
-					mov BL, AL ; BL = top token precedence
-					
-					; precedence = token precedence
-					call restore_token
-					call token_precedence ; AL = token precedence
-					
-					; if precedence > top token precedence {
-					cmp AL, BL
-					jng .less_or_equal_precedence
+					; if the stack is empty {
+					call is_stack_empty
+					jne .stack_not_empty
 					
 						; push token into stack
 						call push_token_to_stack
-				
+					
 						; continue with next token
 						jmp .next_cycle
 						
 					; }else {
-					.less_or_equal_precedence:
+					.stack_not_empty:
 					
-						; ; precedence <= top token precedence
-						; ; pop top token and add it to the new expression
+						; ; compare token precedence to top of the stack operation precedence
 						
-						; top token = pop token from stack
+						; top token = peek top token
 						call clone_token
+						call peek_token_from_stack
+						
+						; top precedence = top token precedence
+						call token_precedence
+						mov BL, AL ; BL = top token precedence
+						
+						; precedence = token precedence
+						call restore_token
+						call token_precedence ; AL = token precedence
+						
+						; if precedence > top token precedence {
+						cmp AL, BL
+						jng .less_or_equal_precedence
+						
+							; push token into stack
+							call push_token_to_stack
+					
+							; continue with next token
+							jmp .next_cycle
+							
+						; }else {
+						.less_or_equal_precedence:
+						
+							; ; precedence <= top token precedence
+							; ; pop top token and add it to the new expression
+							
+							; top token = pop token from stack
+							call clone_token
+							call pop_token_from_stack
+							
+							; add token to new expression
+							call push_token_to_expression
+							
+							; push token into stack
+							call restore_token
+							call push_token_to_stack
+					
+							; continue with next token
+							jmp .next_cycle
+							
+						; }
+						
+					; }
+					
+				; }else {
+				.not_operator:
+				
+					; if token is open parenthesis {
+					cmp byte [token_space], OPEN_PARENTHESIS
+					jne .not_open_parenthesis
+					
+					cmp byte [token_space + 1], 0
+					jne .not_open_parenthesis
+					
+						; place it in the stack
+						call push_token_to_stack
+					
+						; continue with next token
+						jmp .next_cycle
+						
+					; }else {
+					.not_open_parenthesis:
+					
+						; ; Token should be close parenthesis
+						
+						; if token is not close parenthesis {
+						cmp byte [token_space], CLOSE_PARENTHESIS
+						je .was_close_parenthesis
+						
+						cmp byte [token_space + 1], 0
+						je .was_close_parenthesis
+						
+							; raise error saying so
+							mov byte [error_code], ERROR_INVALID_TOKEN
+							jmp .end
+							
+						; }
+						.was_close_parenthesis:
+						
+						; while next token in stack is not open parenthesis and the stack is not empty {
+						
+						.parenthesis_pop_cycle:
+						; Stop popping cycle if stack is empty.
+						call is_stack_empty
+						je .end_parenthesis_pop_cycle
+						call peek_token_from_stack
+						; Stop cycle if token is ')':
+						cmp byte [token_space], CLOSE_PARENTHESIS
+						je .pop_close_parenthesis
+						
+							; ; pop operator and put it on the new expression
+							
+							; pop next token
+							call pop_token_from_stack
+							
+							; push next token to expression
+							call push_token_to_expression
+							
+						; }
+							jmp .parenthesis_pop_cycle
+						.pop_close_parenthesis:
+							call pop_token_from_stack
+						.end_parenthesis_pop_cycle:
+						
+						; pop open parenthesis
 						call pop_token_from_stack
 						
-						; add token to new expression
-						call push_token_to_expression
-						
-						; push token into stack
-						call restore_token
-						call push_token_to_stack
-				
+						; previous was number = true
+						mov byte [previous_was_number], 1
+					
 						; continue with next token
 						jmp .next_cycle
 						
@@ -342,84 +422,35 @@ convert_to_postfix:
 					
 				; }
 				
-			; }else {
-			.not_operator:
-			
-				; if token is open parenthesis {
-				cmp byte [token_space], OPEN_PARENTHESIS
-				jne .not_open_parenthesis
-				
-					; place it in the stack
-					call push_token_to_stack
-				
-					; continue with next token
-					jmp .next_cycle
-					
-				; }else {
-				.not_open_parenthesis:
-				
-					; ; Token is close parenthesis
-					
-					; while next token in stack is not open parenthesis and the stack is not empty {
-					
-					.parenthesis_pop_cycle:
-					; Stop popping cycle if stack is empty.
-					call is_stack_empty
-					je .end_parenthesis_pop_cycle
-					call peek_token_from_stack
-					; Stop cycle if token is ')':
-					cmp byte [token_space], CLOSE_PARENTHESIS
-					je .pop_close_parenthesis
-					
-						; ; pop operator and put it on the new expression
-						
-						; pop next token
-						call pop_token_from_stack
-						
-						; push next token to expression
-						call push_token_to_expression
-						
-					; }
-						jmp .parenthesis_pop_cycle
-					.pop_close_parenthesis:
-						call pop_token_from_stack
-					.end_parenthesis_pop_cycle:
-					
-					; previous was number = true
-					mov byte [previous_was_number], 1
-				
-					; continue with next token
-					jmp .next_cycle
-					
-				; }
-				
 			; }
 			
 		; }
+		.next_cycle:
+			jmp .cycle
 		
-	; }
-	.next_cycle:
-		jmp .cycle
-	
-	.tokens_done:
+		.tokens_done:
 
-	; while stack is not empty {
-	.pop_cycle:
-	call is_stack_empty
-	je .end_pop_cycle
-	
-		; ; pop operator and put it in the new expression
+		; while stack is not empty {
+		.pop_cycle:
+		call is_stack_empty
+		je .end_pop_cycle
 		
-		; pop token from stack
-		call pop_token_from_stack
+			; ; pop operator and put it in the new expression
+			
+			; pop token from stack
+			call pop_token_from_stack
+			
+			; push that token into the stack
+			call push_token_to_expression
+			
+		; }
+			jmp .pop_cycle
+		.end_pop_cycle:
+		.end:
 		
-		; push that token into the stack
-		call push_token_to_expression
-		
-	; }
-		jmp .pop_cycle
-	.end_pop_cycle:
-	
+		call restore_user_input
+	pop EBX
+	pop EAX
 	ret
 
 
