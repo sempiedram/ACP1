@@ -74,6 +74,19 @@
 		CATEGORY_COMPLEMENT equ 4
 		CATEGORY_VARIABLE equ 8
 		CATEGORY_INVALID equ 16
+	
+	; Error codes. These are used together with the error_code byte to send errors.
+		; Means no error has been thrown.
+		NO_ERROR equ 0
+		
+		; Means that an invalid token was found.
+		ERROR_INVALID_TOKEN equ 1
+		
+		; Means that the parenthesis pairs were not properly matched.
+		ERROR_UNMATCHED_PARENTHESIS equ 2
+		
+		; Signals that the indicated base was not recognized.
+		ERROR_INVALID_BASE equ 3
 
 
 .DATA
@@ -158,9 +171,16 @@
 	; This byte is either 0, or 1. 0 means that the program should stop, and 1 that it should continue. It's checked every cycle to see if the program should stop.
 		running db 1
 	
-	; This byte is used to check if there was an error (0 means no error):
-		error_code db 0
-	
+	; These variables are used to properly handle errors.
+		; This byte is used to check if there was an error (0 means no error):
+			error_code db 0
+		
+		; These bytes can be used to mean something depending on the error_code.
+		; For example, the address of a string that is relevant to the error.
+		; Or the index of the character that was problematic.
+			error_extra_info db 0
+			error_extra_info2 db 0
+		
 	; This byte holds the category computed by the check_category method:
 		category db 0
 		
