@@ -11,43 +11,50 @@ process_arithmetic:
 
 	; 1. Expand variables.
 	
-	; call expand_variables
+		; call expand_variables
 	
 	; 2. Do the arithmetic preprocessing.
 	
-	; call arithmetic_preprocessing
+		; call arithmetic_preprocessing
 	
 	; 3. Check that it's a valid arithmetic expression.
 	
-	; call check_valid_arithmetic
+		; call check_valid_arithmetic
 	
 	; 4. Extract from the expression the result base.
 	
-	call extract_result_base
-	
-	; Print the result base:
-	call print_identation
-	PutStr str_found_result_base
-	call print_result_base_name
-	PutStr str_close_string
-	nwln
+		call extract_result_base
+		
+		; Print the result base:
+		call print_identation
+		PutStr str_found_result_base
+		call print_result_base_name
+		PutStr str_close_string
+		nwln
 	
 	; 5. Convert every number into binary.
 	
-	; call convert_numbers_to_binary
+		; call convert_numbers_to_binary
 	
 	; 6. Convert the expression into postfix.
 	
-	call convert_to_postfix
+		call convert_to_postfix
+		
+		; Print the resulting postfix expression.
+		
+		call print_identation
+		PutStr str_postfix_result
+		PutStr expression_space
+		PutStr str_close_string
+		nwln
 	
 	; 7. Evaluate the postfix expression.
 	
-	; call evaluate_postfix
+		; call evaluate_postfix
 	
 	; 8. Convert the resulting number from binary into the result base.
 	
-	; call convert_final_result
-	
+		; call convert_final_result
 	
 	call decrease_identation_level
 	ret
@@ -74,7 +81,7 @@ extract_result_base:
 		
 		cmp ECX, -1
 		je .not_found
-			; ECX = position of '='
+			; Now ECX = position of '='
 			
 			; Take into account the space behind the '=':
 			dec ECX
@@ -206,6 +213,599 @@ get_base_from_string:
 	ret
 
 
+; This method computes the postfix equivalent of the original expression at user_input and stores it in the expression_space.
+; This method assumes that the expression in user_input only has tokens that are valid binary numbers, operators, or parenthesis, and that the pairs of parenthesis are matched.
+
+; TODO list:
+; - In all appropriate pop calls, check that the stack was not empty.
+; - In all appropriate closing keys ('}'), do a jmp .next_cycle.
+; - [Too hard], check that there still is space to push things.
+
 convert_to_postfix:
+	; Save a copy of user_input
+	call clone_user_input
+	
+	; Clear stack and expression.
+	mov byte [stack_space], 0
+	mov byte [expression_space], 0
+	
+	; previous was number = false
+	mov byte [previous_was_number], 0
+	
+	; while there are tokens in the expression {
+		; token = take first token of the expression
+	.cycle:
+	call get_first_token
+	cmp byte [token_space], 0
+	je .tokens_done
+		
+		; if token is '-' {
+		cmp byte [token_space], SUBTRACTION_OPERATION_CHAR
+		jne .not_minus
+			
+			; if previous was not number {
+			mov AL, byte [previous_was_number]
+			test AL, AL
+			jnz .previous_not_number_subtraction
+			
+				; ; It's a negation.
+				; token = '~'
+				mov byte [token_space], COMPLEMENT_CHAR
+				
+			; }
+			.previous_not_number_subtraction:
+			
+		; }
+		.not_minus:
+		
+		; if token is a number {
+		call is_token_binary_number
+		jne .not_number
+		
+			; add it to the new expression
+			call push_token_to_expression
+			
+			; previous was number = true
+			mov byte [previous_was_number], 1
+				
+			; continue with next token
+			jmp .next_cycle
+			
+		; }else {
+		.not_number:
+		
+			; previous was number = false
+			mov byte [previous_was_number], 0
+			
+			; if token is an operator {
+			call is_token_operator
+			jne .not_operator
+			
+				; if the stack is empty {
+				call is_stack_empty
+				jne .stack_not_empty
+				
+					; push token into stack
+					call push_token_to_stack
+				
+					; continue with next token
+					jmp .next_cycle
+					
+				; }else {
+				.stack_not_empty:
+				
+					; ; compare token precedence to top of the stack operation precedence
+					
+					; top token = peek top token
+					call clone_token
+					call peek_token_from_stack
+					
+					; top precedence = top token precedence
+					call token_precedence
+					mov BL, AL ; BL = top token precedence
+					
+					; precedence = token precedence
+					call restore_token
+					call token_precedence ; AL = token precedence
+					
+					; if precedence > top token precedence {
+					cmp AL, BL
+					jng .less_or_equal_precedence
+					
+						; push token into stack
+						call push_token_to_stack
+				
+						; continue with next token
+						jmp .next_cycle
+						
+					; }else {
+					.less_or_equal_precedence:
+					
+						; ; precedence <= top token precedence
+						; ; pop top token and add it to the new expression
+						
+						; top token = pop token from stack
+						call clone_token
+						call pop_token_from_stack
+						
+						; add token to new expression
+						call push_token_to_expression
+						
+						; push token into stack
+						call restore_token
+						call push_token_to_stack
+				
+						; continue with next token
+						jmp .next_cycle
+						
+					; }
+					
+				; }
+				
+			; }else {
+			.not_operator:
+			
+				; if token is open parenthesis {
+				cmp byte [token_space], OPEN_PARENTHESIS
+				jne .not_open_parenthesis
+				
+					; place it in the stack
+					call push_token_to_stack
+				
+					; continue with next token
+					jmp .next_cycle
+					
+				; }else {
+				.not_open_parenthesis:
+				
+					; ; Token is close parenthesis
+					
+					; while next token in stack is not open parenthesis and the stack is not empty {
+					
+					.parenthesis_pop_cycle:
+					; Stop popping cycle if stack is empty.
+					call is_stack_empty
+					je .end_parenthesis_pop_cycle
+					call peek_token_from_stack
+					; Stop cycle if token is ')':
+					cmp byte [token_space], CLOSE_PARENTHESIS
+					je .pop_close_parenthesis
+					
+						; ; pop operator and put it on the new expression
+						
+						; pop next token
+						call pop_token_from_stack
+						
+						; push next token to expression
+						call push_token_to_expression
+						
+					; }
+						jmp .parenthesis_pop_cycle
+					.pop_close_parenthesis:
+						call pop_token_from_stack
+					.end_parenthesis_pop_cycle:
+					
+					; previous was number = true
+					mov byte [previous_was_number], 1
+				
+					; continue with next token
+					jmp .next_cycle
+					
+				; }
+				
+			; }
+			
+		; }
+		
+	; }
+	.next_cycle:
+		jmp .cycle
+	
+	.tokens_done:
+
+	; while stack is not empty {
+	.pop_cycle:
+	call is_stack_empty
+	je .end_pop_cycle
+	
+		; ; pop operator and put it in the new expression
+		
+		; pop token from stack
+		call pop_token_from_stack
+		
+		; push that token into the stack
+		call push_token_to_expression
+		
+	; }
+		jmp .pop_cycle
+	.end_pop_cycle:
+	
 	ret
+
+
+; Returns the precedence of the token in token_space. It assumes the token is a valid operator (i.e. of +, -, *, or /).
+; Returns the token's precedence in the AL register, or 0 if not recognized.
+token_precedence:
+	push BX
+		; AL = operation character
+		mov AL, byte [token_space]
+		
+		; Compare operation to '+'
+		mov BL, ADDITION_OPERATION_CHAR
+		cmp BL, AL
+		jne .not_addition
+			mov AL, ADDITION_OPERATION_PRECEDENCE
+			jmp .end
+		.not_addition:
+		
+		; Compare operation to '-'
+		mov BL, SUBTRACTION_OPERATION_CHAR
+		cmp BL, AL
+		jne .not_subtraction
+			mov AL, SUBTRACTION_OPERATION_PRECEDENCE
+			jmp .end
+		.not_subtraction:
+		
+		; Compare operation to '*'
+		mov BL, MULTIPLICATION_OPERATION_CHAR
+		cmp BL, AL
+		jne .not_multiplication
+			mov AL, MULTIPLICATION_OPERATION_PRECEDENCE
+			jmp .end
+		.not_multiplication:
+				
+		; Compare operation to '/'
+		mov BL, DIVISION_OPERATION_CHAR
+		cmp BL, AL
+		jne .not_division
+			mov AL, DIVISION_OPERATION_PRECEDENCE
+			jmp .end
+		.not_division:
+		
+		; Compare operation to '~'
+		mov BL, COMPLEMENT_CHAR
+		cmp BL, AL
+		jne .not_complement
+			mov AL, COMPLEMENT_OPERATION_PRECEDENCE
+			jmp .end
+		.not_complement:
+	
+		; If it's not a recognized operation, return 0.
+		mov AL, 0
+		
+		.end:
+	pop BX
+	ret
+
+
+; Checks whether token_space is a valid binary number.
+; Returns true or false through the zero flag.
+is_token_binary_number:
+	push EAX
+	push CX
+	
+		mov EAX, token_space ; To scan token_space
+		
+		; Keep count of number of bits in CX.
+		; CX = 0
+		xor CX, CX
+		
+		; Scan the token:
+		.cycle:
+			mov BL, byte [EAX]
+			; Check end of token:
+			cmp BL, 0
+			je .return_false
+			
+			; Check if it's a bit:
+			cmp BL, OFF_BIT_CHAR
+			je .was_bit
+			cmp BL, ON_BIT_CHAR
+			je .was_bit
+				; Found something in the token that was not a bit.
+				; It should be the "bin" sufix. Check that.
+				jmp .check_base
+			.was_bit:
+			
+			inc CX ; Increase bit count
+			cmp CX, MAX_BITS
+			jg .return_false
+			
+			inc EAX ; Next byte
+			jmp .cycle
+		
+		.check_base:
+			; Check that the remaining part of the token is "bin".
+			mov ESI, EAX
+			call get_base_from_string ; AL = value of base
+			cmp AL, 2 ; Compare base value to 2 (binary)
+			
+			; Return accordingly:
+			je .return_true
+			jmp .return_false
+		
+		.return_false:
+			
+			; More than MAX_BITS bits.
+			; Return false.
+			mov AL, 1 ; Set ZF to false.
+			cmp AL, 0
+			jmp .end
+		
+		.return_true:
+			
+			; More than MAX_BITS bits.
+			; Return true.
+			mov AL, 0 ; Set ZF to true.
+			cmp AL, 0
+			jmp .end
+		
+		.end:
+	pop CX
+	pop EAX
+	ret
+
+
+; Checks that token_space is an operator.
+; Returns false or true through the ZF.
+is_token_operator:
+	push AX
+		; All operators are single characters.
+		; Therefore, the second character in token_space should be a 0. Check that:
+		
+		cmp byte [token_space + 1], 0
+		jne .return_false
+		
+		; Test the operation's precedence.
+		; If it's not recognized, AL will be 0, return accordingly.
+		call token_precedence
+		cmp AL, 0
+		je .return_false
+		jmp .return_true
+		
+		.return_false:
+		
+			mov AL, 1 ; Set ZF to false.
+			cmp AL, 0
+			jmp .end
+		
+		.return_true:
+			
+			mov AL, 0 ; Set ZF to true.
+			cmp AL, 0
+			jmp .end
+			
+		.end:
+	pop AX
+	ret
+
+
+; Check whether the stack is empty.
+; Returns true or false, through the ZF.
+is_stack_empty:
+	; Check if the first byte in stack_space is 0 (i.e. the stack is empty).
+	cmp byte [stack_space], 0
+	ret
+
+
+; Pushes the current token into the stack.
+push_token_to_stack:
+	push EAX
+	push EDI
+	push ESI
+		mov EAX, stack_space
+		
+		; Cycle to find the first 0's position:
+		.cycle:
+			; Stop at first 0.
+			cmp byte [EAX], 0
+			je .found
+			
+			; Check next byte:
+			inc EAX
+			jmp .cycle
+		
+		.found:
+			; Check if it was empty:
+			cmp EAX, stack_space
+			je .was_empty
+				; Write a separator space:
+				mov byte [EAX], SPACE_CHAR
+				inc EAX
+			.was_empty:
+			
+			; Copy the token into the stack_space
+			mov ESI, token_space
+			MOV EDI, EAX
+			call clone_string_into
+	pop ESI
+	pop EDI
+	pop EAX
+	ret
+
+
+; Copies (and removes) the last token from the stack into token_space.
+; TODO: indicate an error if there are no more tokens.
+pop_token_from_stack:
+	push EAX
+	push ESI
+	push EDI
+		; Find previous stack limit.
+		mov EAX, stack_space
+		
+		; If it's empty, there's nothing to pop (duh.).
+		cmp byte [EAX], 0
+		je .stack_was_empty
+		
+		; Cycle to find the first 0's position:
+		inc EAX ; Stack was not empty -> first byte is not zero -> don't recheck that byte.
+		
+		.cycle:
+			; Stop at first 0.
+			cmp byte [EAX], 0
+			je .found_0
+			
+			; Check next byte:
+			inc EAX
+			jmp .cycle
+		
+		.found_0:
+			; Found a zero that was not at the beginning of the stack_space.
+			dec EAX ; Ignore that 0.
+
+			; Look for space or beginning of stack.
+			.find_limit:
+				cmp EAX, stack_space
+				je .found_limit
+
+				cmp byte [EAX], SPACE_CHAR
+				je .found_limit_space
+
+				dec EAX
+				jmp .find_limit
+
+			.found_limit_space:
+				mov byte [EAX], 0 ; Remove the space
+				inc EAX ; Ignore the space
+			.found_limit:
+
+			; Copy from that limit up to the end of the stack into token_space (without the space).
+			
+			mov ESI, EAX
+			mov EDI, token_space
+			call clone_string_into
+
+			mov byte [EAX], 0 ; Delete the popped token from stack
+			jmp .end
+		
+		.stack_was_empty:
+			; The stack was empty -> return an empty token.
+			mov byte [token_space], 0
+		.end:
+	pop EDI
+	pop ESI
+	pop EAX
+	ret
+
+
+; This copies the last token in the stack into token_space, without removing it.
+peek_token_from_stack:
+	push EAX
+	push ESI
+	push EDI
+		; Find previous stack limit.
+		mov EAX, stack_space
+		
+		; If it's empty, there's nothing to pop (duh.).
+		cmp byte [EAX], 0
+		je .stack_was_empty
+		
+		; Cycle to find the first 0's position:
+		inc EAX ; Stack was not empty -> first byte is not zero -> don't recheck that byte.
+		
+		.cycle:
+			; Stop at first 0.
+			cmp byte [EAX], 0
+			je .found_0
+			
+			; Check next byte:
+			inc EAX
+			jmp .cycle
+		
+		.found_0:
+			; Found a zero that was not at the beginning of the stack_space.
+			dec EAX ; Ignore that 0.
+
+			; Look for space or beginning of stack.
+			.find_limit:
+				cmp EAX, stack_space
+				je .found_limit
+
+				cmp byte [EAX], SPACE_CHAR
+				je .found_limit_space
+
+				dec EAX
+				jmp .find_limit
+
+			.found_limit_space:
+				inc EAX ; Ignore the space
+			.found_limit:
+
+			; Copy from that limit up to the end of the stack into token_space (without the space).
+			
+			mov ESI, EAX
+			mov EDI, token_space
+			call clone_string_into
+
+			jmp .end
+		
+		.stack_was_empty:
+			; The stack was empty -> return an empty token.
+			mov byte [token_space], 0
+		.end:
+	pop EDI
+	pop ESI
+	pop EAX
+	ret
+
+
+; Copies token_space into the end of expression_space.
+push_token_to_expression:
+	push EAX
+	push EDI
+	push ESI
+		mov EAX, expression_space
+		
+		; Cycle to find the first 0's position:
+		.cycle:
+			; Stop at first 0.
+			cmp byte [EAX], 0
+			je .found
+			
+			; Check next byte:
+			inc EAX
+			jmp .cycle
+		
+		.found:
+			; Check if it was empty:
+			cmp EAX, expression_space
+			je .was_empty
+				; Write a separator space:
+				mov byte [EAX], SPACE_CHAR
+				inc EAX
+			.was_empty:
+			
+			; Copy the token into the expression_space
+			mov ESI, token_space
+			MOV EDI, EAX
+			call clone_string_into
+	pop ESI
+	pop EDI
+	pop EAX
+	ret
+
+
+; This method clones token_space into token_space_swap
+clone_token:
+	push ESI
+	push EDI
+		mov ESI, token_space
+		mov EDI, token_space_swap
+		call clone_string_into
+	pop EDI
+	pop ESI
+	ret
+
+
+; This method "restores" the previously saved token by copying token_space_swap into token_space.
+restore_token:
+	push ESI
+	push EDI
+		mov ESI, token_space_swap
+		mov EDI, token_space
+		call clone_string_into
+	pop EDI
+	pop ESI
+	ret
+
 

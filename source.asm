@@ -14,6 +14,7 @@
 
 ; equ definitions:
 	; This (minus one) is the size limit for the user_input string:
+	; Generally used as a "big" number.
 		INPUT_LIMIT equ 2048
 		
 	; General string spaces:
@@ -44,9 +45,25 @@
 
 		; Operations:
 		ADDITION_OPERATION_CHAR equ '+'
+		ADDITION_OPERATION_PRECEDENCE equ 1
+		
 		SUBTRACTION_OPERATION_CHAR equ '-'
+		SUBTRACTION_OPERATION_PRECEDENCE equ 1
+		
 		MULTIPLICATION_OPERATION_CHAR equ '*'
+		MULTIPLICATION_OPERATION_PRECEDENCE equ 2
+		
 		DIVISION_OPERATION_CHAR equ '/'
+		DIVISION_OPERATION_PRECEDENCE equ 2
+	
+		COMPLEMENT_OPERATION_PRECEDENCE equ 3
+
+	; Bit characters:
+		OFF_BIT_CHAR equ '0'
+		ON_BIT_CHAR equ '1'
+	
+	; Maximum number of bits for binary tokens (and other checks).
+		MAX_BITS equ 32
 
 	; Error codes:
 		USER_INPUT_SWAP_NO_SPACE equ 1
@@ -81,6 +98,9 @@
 		
 		; For showing the found result base:
 		str_found_result_base db "Result base: '", 0
+		
+		; For printing the resulting postfix expression.
+		str_postfix_result db "Postfix equivalent expression: '", 0
 	
 		; String for categories:
 		category_info db "Operation category: ", 0
@@ -114,12 +134,20 @@
 		; user_input_swap is a space used for performing operations over user_input
 		user_input_swap times INPUT_LIMIT db 0
 		
+		; This is used to store the postfix expression:
+		expression_space times INPUT_LIMIT db 0
+		
+		; This space is used to compute the postfic expression.
+		stack_space times INPUT_LIMIT db 0
+		
 		; Strings for general use:
 		string_a times STRING_SIZE db 0
 		string_b times STRING_SIZE db 0
 		
 		; Space for token processing:
-		token_space times STRING_SIZE db 0
+			token_space times STRING_SIZE db 0
+			; Space to store temporarily token_space
+			token_space_swap times STRING_SIZE db 0
 		
 	; This byte is used to keep track of identation, in number of spaces, to be able to "pretty" print things. Used by these methods: "print_identation", "increase_identation", "decrease_identation", "increase_identation_level", and "decrease_identation_level".
 		identation db 0
@@ -138,6 +166,9 @@
 		
 	; This byte holds what base to convert the result of arithmetic operations. 0 means invalid, 2 means binary, 8 means octal, 10 means decimal, 16 means hexadecimal, and any other value is not valid.
 		result_base db 0
+	
+	; This byte is used by the convert_to_postfix method to keep track of whether the previous token was a number.
+		previous_was_number db 0
 
 	; Commands (that start with #) recognized:
 		cmd_exit db "exit", 0
