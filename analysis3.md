@@ -25,7 +25,7 @@ The input will be stored in a string named user_input, which has INPUT_LIMIT byt
 
 The user_input string is the one used for processing. The process_input method processes this string, and does whatever is necessary depending upon it's contents.
 
-Getting the string from the user is done through the GetStr method, of the io.mac (and the io.o file)  library provided by Sivarama, for his book on computer architecture and x86 assembly "Guide to Assembly Language Programming in Linux".
+Getting the string from the user is done through the GetStr method, of the io.mac (and the io.o file) library provided by Sivarama, for his book on computer architecture and x86 assembly "Guide to Assembly Language Programming in Linux".
 
 ## Point 2: Process the input.
 
@@ -201,47 +201,71 @@ The general algorithm is:
 
 	previous was number = false
 
-	for every token in the expression {
+	while there are tokens in the expression {
+		token = take first token of the expression
+		
+		if token is '-' {
+			if previous was not number {
+				; It's a negation.
+				token = '~'
+			}
+		}
+		
 		if token is a number {
 			add it to the new expression
 			previous was number = true
+			continue with next token
 		}else {
 			previous was number = false
 			if token is an operator {
 				if the stack is empty {
 					push token into stack
+					continue with next token
 				}else {
-					if token is '-' {
-						if previous was not number {
-							token = '~' ; It's a negation.
-							add token to new expression
-							continue with next token
-						}
-					}
-					compare token precedence to top of the stack operation precedence
-					if precedence > top operation precedence {
+					; compare token precedence to top of the stack operation precedence
+					
+					top token = peek top token
+					top precedence = top token precedence
+					precedence = token precedence
+					
+					if precedence > top token precedence {
 						push token into stack
+						continue with next token
 					}else {
-						pop top operation and add it to the new expression
+						; precedence <= top token precedence
+						; pop top token and add it to the new expression
+						top token = pop token from stack
+						add token to new expression
 						push token into stack
+						continue with next token
 					}
 				}
 			}else {
 				if token is open parenthesis {
 					place it in the stack
+					continue with next token
 				}else {
-					; Token is close parenthesis
-					while next token in stack is not open parenthesis and the stack is not empty {
-						pop operator and put it on the new expression
+					; Token should be close parenthesis
+					if token is not close parenthesis {
+						raise error saying so
 					}
+					while next token in stack is not open parenthesis and the stack is not empty {
+						; pop operator and put it on the new expression
+						pop next token
+						push next token to expression
+					}
+					pop open parenthesis
 					previous was number = true
+					continue with next token
 				}
 			}
 		}
 	}
 
 	while stack is not empty {
-		pop operator and put it in the new expression
+		; pop operator and put it in the new expression
+		pop token from stack
+		push that token into the stack
 	}
 
 Which is rather big, but it's the core of the evaluation of arithmetic expressions.
