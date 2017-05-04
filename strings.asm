@@ -197,19 +197,18 @@ clone_string_into:
 ; This method removes the first character of the string at EAX, by moving all the remaining characters back one place up to the first byte 0.
 remove_first_character:
 	push EAX
-	push BX
-	.cycle:
-		mov BL, byte [EAX + 1]
-		mov byte [EAX], BL
-		
-		cmp BL, 0
-		je .done
-		
-		inc EAX
-		jmp .cycle
-	
-		.done:
-	pop BX
+	push ESI
+	push EDI
+		; Do nothing if the string is of length 0.
+		cmp byte [EAX], 0
+		je .was_empty
+			mov EDI, EAX ; EDI = EAX
+			inc EAX
+			mov ESI, EAX ; ESI = EAX + 1
+			call clone_string_into
+		.was_empty:
+	pop EDI
+	pop ESI
 	pop EAX
 	ret
 
