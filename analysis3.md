@@ -85,6 +85,8 @@ Variables are to be stored in the variables_space byte field, of size VARIABLES_
 
 The format they will have is: <variable_name>0<variable_value>0<...>, where variable_name is the name of the variable, and variable_value is it's value. Both are C-style strings (represented by the zeroes). For each variable defined there would be one such pair of strings in variables_space.
 
+The end of the variables is where there are two or more zeroes next to each other.
+
 The algorithm to set a variable is:
 
 1. Remove any previous definition, if it exists.
