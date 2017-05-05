@@ -16,6 +16,9 @@
 	; This (minus one) is the size limit for the user_input string:
 	; Generally used as a "big" number.
 		INPUT_LIMIT equ 2048
+
+	; Bytes reserved for variable storage:
+		VARIABLES_SIZE equ 4096
 		
 	; General string spaces:
 		STRING_SIZE equ 512
@@ -168,6 +171,9 @@
 		
 		; This space is used to compute the postfic expression.
 		stack_space times INPUT_LIMIT db 0
+
+		;This byte field is used to store all defined variables.
+		variables_space times VARIABLES_SIZE db 0
 		
 		; Strings for general use:
 		string_a times STRING_SIZE db 0
