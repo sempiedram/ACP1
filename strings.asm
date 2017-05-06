@@ -213,3 +213,40 @@ remove_first_character:
 	ret
 
 
+; Checks whether the string at ESI is composed only of the characters of the string at EDI.
+; Returns the result through the ZF (1 = true, 0 = false).
+is_string_composed_of:
+	push ESI
+	push EDI
+	push EBX
+	push ECX
+		mov ECX, EDI
+		.cycle:
+			mov BL, byte [ESI]
+			cmp BL, 0
+			je .return_true
+			
+			; Look for that character in the string at ECX (EDI)
+			call find_character
+			jnc .return_false
+			
+			inc ESI
+			jmp .cycle
+		
+		.return_false:
+			xor BL, BL
+			inc BL
+			jmp .end
+		
+		.return_true:
+			xor BL, BL
+			jmp .end
+		
+		.end:
+	pop ECX
+	pop EBX
+	pop EDI
+	pop ESI
+	ret
+
+
