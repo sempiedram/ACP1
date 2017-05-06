@@ -12,3 +12,9 @@ display/s $eax
 display/s $ebx
 display/s $ecx
 display/s $edx
+display/5cb &variables_space
+
+; Special commands:
+
+; Shows the first 20 bytes of variables_space as characters:
+display/20cb &variables_space
