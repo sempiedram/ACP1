@@ -1,0 +1,14 @@
+; These commands are used in gdb to debug the project:
+break process_variable_definition
+display/s &user_input
+display/s &user_input_swap
+display/s &token_space
+display/s &token_space_swap
+display/s &string_a
+display/s &string_b
+display/s $esi
+display/s $edi
+display/s $eax
+display/s $ebx
+display/s $ecx
+display/s $edx
