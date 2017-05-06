@@ -12,6 +12,7 @@ process_arithmetic:
 	; 1. Expand variables.
 	
 		call expand_variables
+		nwln
 	
 	; 2. Do the arithmetic preprocessing.
 	
@@ -924,8 +925,8 @@ expand_variables:
 			; if there were expansions {
 			cmp AH, 1
 			jne .no_expansions
+				call print_identation
 				call increase_identation
-					call print_identation
 					PutStr str_variable_expansions
 					PutStr user_input
 					PutStr str_close_string
