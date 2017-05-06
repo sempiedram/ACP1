@@ -7,6 +7,9 @@ copy_to_token:
 		; EDX keeps the address of where to copy the next byte.
 		mov EDX, token_space
 		
+		; Make sure that token_space is empty:
+		mov byte [EDX], 0
+		
 		.cycle:
 			; Stop when reached the EBX address
 			cmp EAX, EBX
@@ -44,6 +47,86 @@ get_first_token:
 		call cut_up_to
 		
 	popad
+	ret
+
+
+; Finds the limit of the current token.
+; ESI should be pointing to the first character of the current token.
+; At the end of this method, ESI will be pointing at the end limit of that token.
+; If there are no tokens in user_input (i.e. user_input's first byte is 0), then
+; it returns user_input.
+find_next_token_limit:
+		cmp byte [ESI], 0
+		jne .first_not_zero
+			; The byte was zero, it's the end of the string
+			; It could mean user_input is empty.
+			jmp .end
+
+		.first_not_zero:
+
+		.cycle:
+			cmp byte [ESI], 0
+			jne .not_zero
+				; Found a zero.
+				; Return that as the limit of the token.
+				jmp .end
+			.not_zero:
+			
+			cmp byte [ESI], SPACE_CHAR
+			jne .not_space
+				; Found a space.
+				jmp .end
+			.not_space:
+
+			; It's a "normal" character, go to next byte.
+			inc ESI
+			jmp .cycle
+
+		.end:
+	ret
+
+
+; This method gets the next token from user_input pointed at by ESI.
+; If there are no more tokens, returns empty token and doesn't move ESI.
+; Example of use:
+;   mov ESI, user_input
+;   call get_next_token
+;   cmp byte [token_space], 0
+;   je .no_more_tokens
+get_next_token:
+	push EDI
+	push AX
+		cmp byte [ESI], 0
+		jne .not_empty
+			; Return "".
+			mov byte [token_space], 0
+			jmp .end
+		.not_empty:
+
+		cmp byte [ESI], SPACE_CHAR
+		jne .not_space
+			inc ESI ; Ignore that space.
+		.not_space:
+
+		push ESI
+			call find_next_token_limit
+			mov AL, byte [ESI] ; Save original delimiter (space or 0).
+			mov byte [ESI], 0 ; Replace delimiter with a 0
+		pop ESI
+			
+		push ESI
+			; Clone next token into token_space
+			mov EDI, token_space
+			call clone_string_into
+			
+			call find_next_token_limit
+			mov byte [ESI], AL ; Restore original delimiter
+		pop ESI
+
+		call find_next_token_limit
+		.end:
+	pop AX
+	pop EDI
 	ret
 
 

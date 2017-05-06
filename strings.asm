@@ -66,6 +66,37 @@ find_character:
 	ret
 
 
+; This method looks for the character in AL in the string pointed to by EBX, and returns the position of the character in ECX. If the character is not found, then it returns -1 in ECX.
+find_character_position:
+	push EBX
+		.cycle:
+			; Stop if reached the end of the string.
+			cmp byte [EBX], 0
+			je .not_found
+			
+			; Stop if found the character.
+			cmp byte [EBX], AL
+			je .found
+			
+			; Check next byte:
+			inc EBX
+			jmp .cycle
+			
+		.found:
+			; Return the position of the character.
+			mov ECX, EBX
+			jmp .end
+		
+		.not_found:
+			; Return -1
+			mov ECX, -1
+			jmp .end
+		
+		.end:
+	pop EBX
+	ret
+
+
 ; Removes from the string in address EAX the characters up to EBX, and moves the rest of the string accordingly.
 cut_up_to:
 	push EBX
@@ -166,20 +197,56 @@ clone_string_into:
 ; This method removes the first character of the string at EAX, by moving all the remaining characters back one place up to the first byte 0.
 remove_first_character:
 	push EAX
-	push BX
-	.cycle:
-		mov BL, byte [EAX + 1]
-		mov byte [EAX], BL
-		
-		cmp BL, 0
-		je .done
-		
-		inc EAX
-		jmp .cycle
-	
-		.done:
-	pop BX
+	push ESI
+	push EDI
+		; Do nothing if the string is of length 0.
+		cmp byte [EAX], 0
+		je .was_empty
+			mov EDI, EAX ; EDI = EAX
+			inc EAX
+			mov ESI, EAX ; ESI = EAX + 1
+			call clone_string_into
+		.was_empty:
+	pop EDI
+	pop ESI
 	pop EAX
+	ret
+
+
+; Checks whether the string at ESI is composed only of the characters of the string at EDI.
+; Returns the result through the ZF (1 = true, 0 = false).
+is_string_composed_of:
+	push ESI
+	push EDI
+	push EBX
+	push ECX
+		mov ECX, EDI
+		.cycle:
+			mov BL, byte [ESI]
+			cmp BL, 0
+			je .return_true
+			
+			; Look for that character in the string at ECX (EDI)
+			call find_character
+			jnc .return_false
+			
+			inc ESI
+			jmp .cycle
+		
+		.return_false:
+			xor BL, BL
+			inc BL
+			jmp .end
+		
+		.return_true:
+			xor BL, BL
+			jmp .end
+		
+		.end:
+	pop ECX
+	pop EBX
+	pop EDI
+	pop ESI
 	ret
 
 
