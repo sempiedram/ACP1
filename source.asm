@@ -493,7 +493,7 @@ print_invalid_expression_reason:
 		cmp AL, REASON_DEF_CHAR
 		jne .not_def_char
 			PutStr str_reason_def_char_missing
-			PutStr error_extra_info2
+			PutStr dword [error_extra_info2]
 			PutStr str_close_string
 			jmp .end
 		.not_def_char:
