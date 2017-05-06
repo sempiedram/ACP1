@@ -98,8 +98,23 @@
 		ERROR_INVALID_EXPRESSION equ 5
 		
 			; The expression is invalid because two numbers were together.
-			REASON_NUMBERS_TOGETHER equ 6
+			REASON_NUMBERS_TOGETHER equ 0
 
+			; Two or more copies of the char specified by error_extra_info were found in the string at error_extra_info2 whene there should be only one.
+			REASON_MULTIPLE_CHARACTERS equ 1
+
+			; The expression has no tokens.
+			REASON_NO_TOKENS equ 2
+			
+			; The expression's second token is not ':'.
+			REASON_DEF_CHAR equ 3
+			
+			; The expression doesn't have enough tokens.
+			REASON_NOT_ENOUGH_TOKENS equ 4
+		
+		; The a variable's name is not valid.
+		; The token is in the string pointed at by error_extra_info2.
+		ERROR_INVALID_VARIABLE_NAME equ 6
 
 .DATA
 	; This is the string used as prompt for the next operation:
@@ -126,6 +141,17 @@
 		
 		; For printing the resulting postfix expression.
 		str_postfix_result db "Postfix equivalent expression: '", 0
+		
+		; For printing all variables.
+		str_defined_variables db "These are the defined variables:", 0
+		
+		; When variables_space is empty:
+		str_variables_empty db "There are no variables defined.", 0
+		
+		str_variable_expansions db "Variables expansions: '", 0
+		
+		str_defined_variable1 db "Varible defined. Name: '", 0
+		str_defined_variable2 db "', value: '", 0
 	
 		; String for categories:
 		category_info db "Operation category: ", 0
@@ -157,8 +183,15 @@
 			str_error_invalid_token db "The following token is not valid: '", 0
 			str_error_invalid_expression db "The expression given is invalid.", 0
 			str_error_invalid_base db "The base given was not recognized: '", 0
-			str_reason_numbers_together db "Two numbers were next to each other in the expression.", 0
 			str_error_no_base_indicator db "The expression doesn't have a base result indicator.", 0
+			str_error_invalid_name db "This token is not a valid variable name: '", 0
+		
+		; Reasons for errors strings:
+			str_reason_numbers_together db "Two numbers were next to each other in the expression.", 0
+			str_reason_multiple_characters db "Two or more instances of the character '", 0
+			str_reason_multiple_characters2 db "' were found in the string '", 0
+			str_reason_def_char_missing db "This token was expected to be a variable definition indicator character: '", 0
+			str_reason_not_enough_tokens db "The expression doesn't have enough tokens to be processed.", 0
 	
 	; String memory spaces:
 		; This is the string space for user input
@@ -196,6 +229,9 @@
 	; These variables are used to properly handle errors.
 		; This byte is used to check if there was an error (0 means no error):
 			error_code db 0
+
+		; This is the reason code of the error.
+			error_reason db 0
 		
 		; These bytes can be used to mean something depending on the error_code.
 		; For example, the address of a string that is relevant to the error.
@@ -346,6 +382,8 @@ process_input:
 		jmp .end
 	
 	.end:
+		; Handles any errors that the process_x commands could have raised.
+		call handle_error
 	call decrease_identation_level
 	ret
 
@@ -364,6 +402,10 @@ preprocess:
 
 ; General error handling method.
 handle_error:
+	; Do nothing if error_code is NO_ERROR
+	cmp byte [error_code], NO_ERROR
+	je .end
+	
 	cmp byte [error_code], ERROR_NO_RESULT_BASE_INDICATOR
 	jne .not_base_indicator
 		; Inform that no base indicator was present in the expression.
@@ -402,11 +444,20 @@ handle_error:
 		call print_invalid_expression_reason
 		jmp .end
 	.not_invalid_expression:
+
+	cmp byte [error_code], ERROR_INVALID_VARIABLE_NAME
+	jne .not_variable_name
+		PutStr str_error_invalid_name
+		PutStr [error_extra_info2]
+		PutStr str_close_string
+		nwln
+		jmp .end
+	.not_variable_name:
 	
 	; cmp byte [error_code], ERROR_
 	; jne .not_
 		; PutStr str_error_
-		; PutStr [error_extra_info]
+		; PutStr [error_extra_info2]
 		; PutStr str_close_string
 		; nwln
 		; jmp .end
@@ -421,7 +472,7 @@ handle_error:
 print_invalid_expression_reason:
 	call print_identation
 	push AX
-		mov AL, byte [error_extra_info]
+		mov AL, byte [error_reason]
 		
 		cmp AL, REASON_NUMBERS_TOGETHER
 		jne .not_numbers_together
@@ -429,6 +480,30 @@ print_invalid_expression_reason:
 			jmp .end
 		.not_numbers_together:
 		
+		cmp AL, REASON_MULTIPLE_CHARACTERS
+		jne .not_multiple
+			PutStr str_reason_multiple_characters
+			PutCh byte [error_extra_info]
+			PutStr str_reason_multiple_characters2
+			PutStr error_extra_info2
+			PutStr str_close_string
+			jmp .end
+		.not_multiple:
+		
+		cmp AL, REASON_DEF_CHAR
+		jne .not_def_char
+			PutStr str_reason_def_char_missing
+			PutStr error_extra_info2
+			PutStr str_close_string
+			jmp .end
+		.not_def_char:
+		
+		cmp AL, REASON_NOT_ENOUGH_TOKENS
+		jne .not_enough_tokens
+			PutStr str_reason_not_enough_tokens
+			jmp .end
+		.not_enough_tokens:
+
 		.end:
 		nwln
 	pop AX
