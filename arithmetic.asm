@@ -11,7 +11,7 @@ process_arithmetic:
 
 	; 1. Expand variables.
 	
-		; call expand_variables
+		call expand_variables
 	
 	; 2. Do the arithmetic preprocessing.
 	
@@ -27,8 +27,6 @@ process_arithmetic:
 		
 		cmp byte [error_code], NO_ERROR
 		je .no_error_4
-			; Error extracting the base.
-			call handle_error
 			jmp .end
 		.no_error_4:
 		
@@ -49,8 +47,6 @@ process_arithmetic:
 		
 		cmp byte [error_code], NO_ERROR
 		je .no_error_6
-			; Error extracting the base.
-			call handle_error
 			jmp .end
 		.no_error_6: ; No error in step 6
 		
@@ -683,7 +679,7 @@ push_token_to_stack:
 			
 			; Copy the token into the stack_space
 			mov ESI, token_space
-			MOV EDI, EAX
+			mov EDI, EAX
 			call clone_string_into
 	pop ESI
 	pop EDI
@@ -875,4 +871,72 @@ restore_token:
 	pop ESI
 	ret
 
+
+; Expands the variable names in user_input (i.e. replaces the names with their respective values).
+; If a name is not a variable, it's simply not expanded.
+expand_variables:
+	push ESI
+	push EDI
+	push EAX
+		; AH will be used to keep track of whether a variable was expanded.
+		xor AH, AH ; AH = false
+		mov EDI, user_input_swap
+		; while there are tokens in user_input {
+		.token_cycle:
+		call get_first_token
+		cmp byte [token_space], 0
+		je .no_more_tokens
+			; if token is a variable {
+			call get_variable_value ; string_a = variable value
+			cmp byte [string_a], 0
+			je .not_defined
+				mov ESI, string_a
+				mov AH, 1
+				jmp .copy_string
+			; }else {
+			.not_defined:
+				mov ESI, token_space
+				jmp .copy_string
+			; }
+			.copy_string:
+				mov AL, byte [ESI]
+				mov byte [EDI], AL
+				cmp AL, 0
+				je .done_copying
+				inc EDI
+				inc ESI
+				jmp .copy_string
+
+			.done_copying:
+				mov byte [EDI], SPACE_CHAR
+				inc EDI
+				jmp .token_cycle
+		; }
+		.no_more_tokens:
+			; Remove the last space written:
+			dec EDI
+			mov byte [EDI], 0
+
+			; Copy the created string into user_input:
+			call restore_user_input
+			call preprocess ; Make sure tgat it's properly formatted.
+
+			; if there were expansions {
+			cmp AH, 1
+			jne .no_expansions
+				call increase_identation
+					call print_identation
+					PutStr str_variable_expansions
+					PutStr user_input
+					PutStr str_close_string
+					nwln
+					; try to expand variables again
+					call expand_variables
+				call decrease_identation
+			; }
+			.no_expansions:
+	pop EAX
+	pop EDI
+	pop ESI
+	ret
 
