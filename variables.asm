@@ -164,6 +164,8 @@ process_variable_definition:
 			mov EDI, string_b
 			call clone_string_into
 			
+			; TODO: Check that the variable's name is not a valid hexadecimal number.
+			
 			call define_variable
 			
 			nwln
@@ -272,6 +274,8 @@ push_into_variables:
 get_variable_value:
 	push ESI
 	push EDI
+		; Make sure that the result is "" by default:
+		mov byte [string_a], 0
 		; Check if variables_space is empty:
 		cmp byte [variables_space], 0
 		je .no_variables
