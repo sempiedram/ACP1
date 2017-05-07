@@ -121,6 +121,9 @@ token_bin_bin:
 token_hex_bin:
 	push ESI
 	push EDI
+		; Write the bits to string_a
+		mov EDI, string_a
+	
 		; Expand every character in token_space as being a hex digit
 		mov ESI, token_space
 		
@@ -139,6 +142,65 @@ token_hex_bin:
 			call clone_string_into_update_edi
 	pop ESI
 	pop EDI
+	ret
+
+
+; This method converts the string at token_space which should be
+; a valid octal number, into a binary string number.
+; The result is stored in string_a.
+token_oct_bin:
+	push ESI
+	push EDI
+		; Write the bits to string_a
+		mov EDI, string_a
+	
+		; Expand every character in token_space as being a hex digit
+		mov ESI, token_space
+		
+		.cycle:
+			cmp byte [ESI], 0
+			je .done
+			
+			call expand_oct_digit
+			
+			inc ESI
+			jmp .cycle
+			
+		.done:
+	pop EDI
+	pop ESI
+	ret
+
+
+; This method expands the character pointed at by ESI which should be
+; a valid octal digit into it's binary equivalent.
+; It modifies EDI to point to the byte after the last bit that was written.
+expand_oct_digit:
+	push AX
+		mov AL, byte [ESI]
+		
+		cmp AL, '0'
+		jae .above_zero
+		jmp .below_zero
+		
+		.above_zero:
+			cmp AL, '7'
+			jbe .under_seven
+			jmp .above_seven
+		
+		.under_seven:
+			; It's one of "01234567"
+			sub AL, '0'
+			call write_last_three_bits
+			jmp .end
+	
+		.below_zero:
+		.above_seven:
+			; It's not a valid oct digit
+			; Ignore it.
+		
+		.end:
+	pop AX
 	ret
 
 
