@@ -4,6 +4,8 @@
 ; The final result ends up in string_a
 ; The algorithm is as follows:
 evaluate_postfix:
+	push ESI
+	push EAX
 		; if expression is empty {
 		cmp byte [expression_space], 0
 		jne .not_empty
@@ -181,23 +183,130 @@ evaluate_postfix:
 		; }
 		
 		.return:
+	pop EAX
+	pop ESI
+	ret
+
+
+; Evaluates the current operation.
+; The operator should be in token_space
+; The operands should be in string_a, and string_b (if two operands are required).
+; The result ends up in token_space
+evaluate_operation:
+	push BX
+		; AL = operation character
+		mov AL, byte [token_space]
+		
+		; Compare operation to '+'
+		mov BL, ADDITION_OPERATION_CHAR
+		cmp BL, AL
+		jne .not_addition
+			call evaluate_addition
+			jmp .end
+		.not_addition:
+		
+		; Compare operation to '-'
+		mov BL, SUBTRACTION_OPERATION_CHAR
+		cmp BL, AL
+		jne .not_subtraction
+			call evaluate_subtraction
+			jmp .end
+		.not_subtraction:
+		
+		; Compare operation to '*'
+		mov BL, MULTIPLICATION_OPERATION_CHAR
+		cmp BL, AL
+		jne .not_multiplication
+			call evaluate_multiplication
+			jmp .end
+		.not_multiplication:
+				
+		; Compare operation to '/'
+		mov BL, DIVISION_OPERATION_CHAR
+		cmp BL, AL
+		jne .not_division
+			call evaluate_division
+			jmp .end
+		.not_division:
+		
+		; Compare operation to '~'
+		mov BL, COMPLEMENT_CHAR
+		cmp BL, AL
+		jne .not_complement
+			call evaluate_complement
+			jmp .end
+		.not_complement:
+		
+		.end:
+	pop BX
+	ret
+
+
+; Performs an addition.
+; The two operands should be in string_a, and string_b.
+; The result ends up in token_space.
+evaluate_addition:
+		; 1. Convert both operands to numbers.
+		; 2. Add numbers.
+		; 3. Convert result to binary number string (store it in token_space).
+	ret
+
+
+; Performs an subtraction.
+; The two operands should be in string_a, and string_b.
+; The result ends up in token_space.
+evaluate_subtraction:
+		; 1. Convert both operands to numbers.
+		; 2. Subtract numbers.
+		; 3. Convert result to binary number string (store it in token_space).
+	ret
+
+
+; Performs an multiplication.
+; The two operands should be in string_a, and string_b.
+; The result ends up in token_space.
+evaluate_multiplication:
+		; 1. Convert both operands to numbers.
+		; 2. Multiply numbers.
+		; 3. Convert result to binary number string (store it in token_space).
+	ret
+
+
+; Performs an division.
+; The two operands should be in string_a, and string_b.
+; The result ends up in token_space.
+evaluate_division:
+		; 1. Convert both operands to numbers.
+		; 2. Divide numbers.
+		; 3. Convert result to binary number string (store it in token_space).
+	ret
+
+
+; Performs an complement operation.
+; The operand should be in string_a.
+; The result ends up in token_space.
+evaluate_complement:
+		; 1. Convert operand to number.
+		; 2. Invert number.
+		; 3. Add 1 to the number.
+		; 3. Convert result to binary number string (store it in token_space).
 	ret
 
 
 ; Returns in AL how many operands does the operation takes (1 if operation is ~, 2 otherwise).
 get_operation_operands:
-		cmp byte [token_space], COMPLEMENT_CHAR
-		jne .not_complement
+	cmp byte [token_space], COMPLEMENT_CHAR
+	jne .not_complement
+	
+		; Is complement, return 1.
+		mov AL, 1
+		jmp .return
 		
-			; Is complement, return 1.
-			mov AL, 1
-			jmp .return
-			
-		.not_complement:
-		
-		; Return 2 if it's not complement.
-		mov AL, 2
-		
-		.return:
+	.not_complement:
+	
+	; Return 2 if it's not complement.
+	mov AL, 2
+	
+	.return:
 	ret
 
