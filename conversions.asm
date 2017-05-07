@@ -167,6 +167,9 @@ token_oct_bin:
 			jmp .cycle
 			
 		.done:
+			; Put "oct" at the end of string_a
+			mov ESI, octal_base_identifier
+			call clone_string_into_update_edi
 	pop EDI
 	pop ESI
 	ret
