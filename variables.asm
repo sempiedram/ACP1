@@ -6,6 +6,7 @@ print_vars:
 	push ESI
 	push AX
 		mov ESI, variables_space
+		call print_identation
 		call increase_identation_level
 		PutStr str_defined_variables
 		nwln
