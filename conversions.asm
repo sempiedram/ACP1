@@ -99,6 +99,51 @@ convert_token_to_binary:
 
 ; This method converts the string at token_space into binary.
 ; The result is stored in string_a.
+token_dec_bin:
+		; 1. Convert token_space to a number
+		call convert_dec_number
+		
+		; 2. Convert number to binary
+		; call convert_number_bin
+	ret
+
+
+; Converts the decimal number string at token_space into a number
+; and returns that in the EAX register.
+convert_dec_number:
+	push ESI
+	push EBX
+		; Result = EAX
+		xor EAX, EAX
+		mov ESI, token_space
+		
+		.cycle:
+			; Next byte:
+			mov BL, byte [ESI]
+			
+			; Stop at first 0
+			cmp BL, 0
+			je .done_cycle
+			
+			; Get next digit's value:
+			sub BL, '0'
+			
+			add EAX, BL
+			mov EBX, 10
+			mul EBX
+			
+			; point to next byte
+			inc ESI
+			jmp .cycle
+		
+		.done_cycle:
+	pop EBX
+	pop ESI
+	ret
+
+
+; This method converts the string at token_space into binary.
+; The result is stored in string_a.
 token_bin_bin:
 	push ESI
 	push EDI
