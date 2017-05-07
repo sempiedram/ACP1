@@ -77,7 +77,7 @@ process_arithmetic:
 	
 	; 7. Evaluate the postfix expression.
 	
-		; call evaluate_postfix
+		call evaluate_postfix
 	
 	; 8. Convert the resulting number from binary into the result base.
 	
