@@ -55,7 +55,7 @@ process_arithmetic:
 	
 	; 5. Convert every number into binary.
 	
-		; call convert_numbers_to_binary
+		call convert_numbers_to_binary
 	
 	; 6. Convert the expression into postfix.
 	
