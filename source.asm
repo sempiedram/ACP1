@@ -7,6 +7,7 @@
 %include  "categories.asm"
 %include  "commands.asm"
 %include  "conversions.asm"
+%include  "evaluation.asm"
 %include  "identation.asm"
 %include  "strings.asm"
 %include  "tokens.asm"

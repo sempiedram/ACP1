@@ -84,9 +84,9 @@ evaluate_postfix:
 						call restore_token
 						
 						; raise error, invalid expression not enough operands (token_space)
-						mov byte [error_code], ERROR_INVALID_OPERATION
+						mov byte [error_code], ERROR_INVALID_EXPRESSION
 						mov byte [error_reason], REASON_NOT_ENOUGH_OPERANDS
-						mov byte [error_extra_info2], token_space
+						mov dword [error_extra_info2], token_space
 						jmp .return
 						
 					; }
@@ -116,9 +116,9 @@ evaluate_postfix:
 					call restore_token
 					
 					; raise error, invalid expression not enough operands (token_space)
-					mov byte [error_code], ERROR_INVALID_OPERATION
+					mov byte [error_code], ERROR_INVALID_EXPRESSION
 					mov byte [error_reason], REASON_NOT_ENOUGH_OPERANDS
-					mov byte [error_extra_info2], token_space
+					mov dword [error_extra_info2], token_space
 					jmp .return
 					
 				; }
@@ -179,6 +179,24 @@ evaluate_postfix:
 			
 			jmp .return
 		; }
+		
+		.return:
+	ret
+
+
+; Returns in AL how many operands does the operation takes (1 if operation is ~, 2 otherwise).
+get_operation_operands:
+		cmp byte [token_space], COMPLEMENT_CHAR
+		jne .not_complement
+		
+			; Is complement, return 1.
+			mov AL, 1
+			jmp .return
+			
+		.not_complement:
+		
+		; Return 2 if it's not complement.
+		mov AL, 2
 		
 		.return:
 	ret
