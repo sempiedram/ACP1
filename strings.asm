@@ -115,6 +115,43 @@ cut_up_to:
 	ret
 
 
+; This method reverses the string pointed at by ESI.
+reverse_string:
+	push EAX
+	push EDI
+	push ESI
+		; EDI points to first character.
+		mov EDI, ESI
+		
+		; Moves ESI to last character:
+		call find_next_zero_esi
+		dec ESI
+		
+		cmp ESI, EDI
+		je .done
+		
+		.cycle:
+			; Stop if ESI <= EDI.
+			cmp ESI, EDI
+			jb .done
+			
+			; Switch bytes:
+			mov AL, byte [ESI]
+			mov AH, byte [EDI]
+			mov byte [EDI], AL
+			mov byte [ESI], AH
+			
+			inc EDI
+			dec ESI
+			jmp .cycle
+		
+		.done:
+	pop ESI
+	pop EDI
+	pop EAX
+	ret
+
+
 ; This method counts the characters in the string pointed at by the EAX. Return the result in the EBX register.
 get_string_length:
 	push EAX
