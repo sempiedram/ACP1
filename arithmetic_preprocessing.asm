@@ -170,8 +170,6 @@ add_result_base_indicator:
 						.not_valid_base:
 						
 							; raise error
-							PutCh '$'
-							PutCh '$'
 							mov byte [error_code], ERROR_INVALID_BASE
 							mov dword [error_extra_info2], token_space
 							
