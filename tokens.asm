@@ -53,8 +53,8 @@ get_first_token:
 ; Finds the limit of the current token.
 ; ESI should be pointing to the first character of the current token.
 ; At the end of this method, ESI will be pointing at the end limit of that token.
-; If there are no tokens in user_input (i.e. user_input's first byte is 0), then
-; it returns user_input.
+; If there are no tokens in the string (i.e. the first byte is 0), then
+; it doesn't move ESI.
 find_next_token_limit:
 		cmp byte [ESI], 0
 		jne .first_not_zero
@@ -86,7 +86,7 @@ find_next_token_limit:
 	ret
 
 
-; This method gets the next token from user_input pointed at by ESI.
+; This method gets the next token from the string pointed at by ESI.
 ; If there are no more tokens, returns empty token and doesn't move ESI.
 ; Example of use:
 ;   mov ESI, user_input
