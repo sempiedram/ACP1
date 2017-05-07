@@ -318,7 +318,62 @@ The algorithm is basically:
 
 At the end of this algorithm, the stack should have exactly one operand left, which is the value of the whole expression. If there is either no operands left (the expression was empty), or multiple operands (the expression was malformed, such as: "5 5 + 3"), then an error should be raised saying so.
 
-Another error that can happen is that an operation requires n operands, but there are less than n operands in the stack. This should be properly detected, and displayed. 
+Another error that can happen is that an operation requires n operands, but there are less than n operands in the stack. This should be properly detected, and displayed.
+
+The more developed version of the algorithm is:
+
+	if expression is empty {
+		return empty (clear string_a)
+	}
+	
+	for token in expression {
+		if token is number {
+			push number to stack_space
+		}else {
+			; Token should be an operator
+			if token is not operator {
+				raise error, invalid token(token_space)
+			}
+			operands to pop = get operation operands
+			
+			save token ; because pop operantions write over it
+			
+			if(operands to pop == 2) {
+				pop operand into string_b
+				
+				; Check that there are enough tokens for the evaluation.
+				if (no more operands) {
+					restore token ; restore saved operation token
+					raise error, invalid expression not enough operands (token_space)
+				}
+			}
+			
+			pop operand into string_a
+			
+			; Check that there are enough tokens for the evaluation.
+			if (no more operands) {
+				restore token ; restore saved operation token
+				raise error, invalid expression not enough operands (token_space)
+			}
+			
+			restore token ; restore saved operation token
+			
+			evaluate operation ; now token_space = result of operation
+			
+			push token to stack_space
+		}
+	}
+	
+	if stack has at least one token {
+		if stack has another token {
+			raise error, too many operands
+		}
+		copy that token into string_a
+	}else {
+		; This should not be possible, check it anyway.
+		; Could do -> raise error, no result
+		return empty (clear string_a)
+	}
 
 ## Arithmetic operation: Conversion from binary to result base
 
