@@ -97,6 +97,19 @@ convert_token_to_binary:
 	ret
 
 
+; This method converts the string at token_space into binary.
+; The result is stored in string_a.
+token_bin_bin:
+	push ESI
+	push EDI
+		mov ESI, token_space
+		mov EDI, string_a
+		call clone_string_into
+	pop EDI
+	pop ESI
+	ret
+
+
 ; Checks if token_space is a valid number.
 is_token_valid_number:
 	push EAX
