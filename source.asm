@@ -93,6 +93,7 @@
 		ERROR_INVALID_BASE equ 3
 		
 		; Signals that the expression doesn't have a result base indicator.
+		; TODO: Make this error a reason for ERROR_INVALID_EXPRESSION.
 		ERROR_NO_RESULT_BASE_INDICATOR equ 4
 		
 		; The expression is invalid.
@@ -112,6 +113,12 @@
 			
 			; The expression doesn't have enough tokens.
 			REASON_NOT_ENOUGH_TOKENS equ 4
+			
+			; The expression has two or more result base indicators.
+			REASON_MULTIPLE_RESULT_BASE equ 5
+			
+			; Too many tokens after the token pointed at by error_extra_info2
+			REASON_TOO_MANY_AFTER equ 6
 		
 		; The a variable's name is not valid.
 		; The token is in the string pointed at by error_extra_info2.
@@ -196,6 +203,8 @@
 			str_reason_multiple_characters2 db "' were found in the string '", 0
 			str_reason_def_char_missing db "This token was expected to be a variable definition indicator character: '", 0
 			str_reason_not_enough_tokens db "The expression doesn't have enough tokens to be processed.", 0
+			str_reason_multiple_result_base db "The expression has multiple base result indicators.", 0
+			str_too_many_tokens_after db "There are too many tokens after: '", 0
 	
 	; String memory spaces:
 		; This is the string space for user input
@@ -263,6 +272,10 @@
 		octal_base_identifier db "oct", 0
 		decimal_base_identifier db "dec", 0
 		hexadecimal_base_identifier db "hex", 0
+		
+		; Default base string.
+		; This string is appended to user_input when no result base indicator has been specified.
+		default_base_result_indicator db " = dec", 0
 	
 	; Sets of characters:
 	; These sets can be used to classify strings.
@@ -425,7 +438,7 @@ handle_error:
 	jne .not_invalid_token
 		call print_identation
 		PutStr str_error_invalid_token
-		PutStr [error_extra_info2]
+		PutStr dword [error_extra_info2]
 		PutStr str_close_string
 		nwln
 		jmp .end
@@ -435,7 +448,7 @@ handle_error:
 	jne .not_invalid_base
 		call print_identation
 		PutStr str_error_invalid_base
-		PutStr [error_extra_info2]
+		PutStr dword [error_extra_info2]
 		PutStr str_close_string
 		nwln
 		jmp .end
@@ -454,7 +467,7 @@ handle_error:
 	cmp byte [error_code], ERROR_INVALID_VARIABLE_NAME
 	jne .not_variable_name
 		PutStr str_error_invalid_name
-		PutStr [error_extra_info2]
+		PutStr dword [error_extra_info2]
 		PutStr str_close_string
 		nwln
 		jmp .end
@@ -463,7 +476,7 @@ handle_error:
 	; cmp byte [error_code], ERROR_
 	; jne .not_
 		; PutStr str_error_
-		; PutStr [error_extra_info2]
+		; PutStr dword [error_extra_info2]
 		; PutStr str_close_string
 		; nwln
 		; jmp .end
@@ -509,7 +522,20 @@ print_invalid_expression_reason:
 			PutStr str_reason_not_enough_tokens
 			jmp .end
 		.not_enough_tokens:
-
+		
+		cmp AL, REASON_MULTIPLE_RESULT_BASE
+		jne .not_multiple_result_base
+			PutStr str_reason_multiple_result_base
+			jmp .end
+		.not_multiple_result_base:
+		
+		cmp AL, REASON_TOO_MANY_AFTER
+		jne .not_too_many_tokens
+			PutStr str_too_many_tokens_after
+			PutStr dword [error_extra_info2]
+			PutStr str_close_string
+		.not_too_many_tokens:
+		
 		.end:
 		nwln
 	pop AX
