@@ -419,10 +419,8 @@ convert_to_postfix:
 						; ; Token should be close parenthesis
 						
 						; if token is not close parenthesis {
-						cmp byte [token_space], CLOSE_PARENTHESIS
-						je .was_close_parenthesis
 						
-						cmp byte [token_space + 1], 0
+						cmp byte [token_space], CLOSE_PARENTHESIS
 						je .was_close_parenthesis
 						
 							; raise error saying so
@@ -432,6 +430,20 @@ convert_to_postfix:
 							
 						; }
 						.was_close_parenthesis:
+						
+						cmp byte [token_space + 1], 0
+						je .was_close_parenthesis2
+						
+							; It's a token that starts with '(', but
+							; has multiple characters, therefore, it's
+							; not a valid open parenthesis.
+						
+							; raise error saying so
+							mov byte [error_code], ERROR_INVALID_TOKEN
+							mov dword [error_extra_info2], token_space
+							jmp .end
+							
+						.was_close_parenthesis2:
 						
 						; while next token in stack is not open parenthesis and the stack is not empty {
 						
@@ -936,7 +948,7 @@ expand_variables:
 
 			; Copy the created string into user_input:
 			call restore_user_input
-			call preprocess ; Make sure tgat it's properly formatted.
+			call preprocess ; Make sure that it's properly formatted.
 
 			; if there were expansions {
 			cmp AH, 1
