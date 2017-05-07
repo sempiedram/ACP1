@@ -27,7 +27,7 @@ convert_numbers_to_binary:
 					call clone_string_into_update_edi
 				pop ESI
 				
-				jmp .cycle
+				jmp .next_cycle
 			; }else {
 			.not_number:
 			
@@ -37,11 +37,26 @@ convert_numbers_to_binary:
 					call clone_string_into_update_edi
 				pop ESI
 				
-				jmp .cycle
+				jmp .next_cycle
 			; }
+			
+			.next_cycle:
+				; Write a separator space
+				mov byte [EDI], SPACE_CHAR
+				inc EDI
+				jmp .cycle
 			
 		; }
 		.no_more_tokens:
+			; If something was written, there's an extra space
+			; Remove it.
+			cmp EDI, user_input_swap
+			je .did_nothing
+				dec EDI ; Position of the space.
+				mov byte [EDI], 0
+			.did_nothing:
+			
+			call restore_user_input
 	pop EDI
 	pop ESI
 	ret
@@ -52,6 +67,7 @@ convert_numbers_to_binary:
 ; Result: string_a, number converted to binary
 convert_token_to_binary:
 	push ESI
+	push EDI
 	push EAX
 		mov ESI, token_space
 		call find_next_zero_esi
@@ -93,6 +109,7 @@ convert_token_to_binary:
 		
 		.end:
 	pop EAX
+	pop EDI
 	pop ESI
 	ret
 
@@ -100,11 +117,13 @@ convert_token_to_binary:
 ; This method converts the string at token_space into binary.
 ; The result is stored in string_a.
 token_dec_bin:
+	push EAX
 		; 1. Convert token_space to a number
 		call convert_dec_number
 		
 		; 2. Convert number to binary
 		call convert_number_bin
+	pop EAX
 	ret
 
 
@@ -127,6 +146,8 @@ convert_number_bin:
 		je .cycle_done
 		; while quotient != 0 {
 		
+			xor EDX, EDX ; EDX = 0
+			
 			; divide number by 2
 			div ECX
 			; Now EAX = EAX/2 and EDX = EAX%2
@@ -142,6 +163,16 @@ convert_number_bin:
 			jmp .cycle
 		; }
 		.cycle_done:
+			; Write final '0':
+			mov byte [EDI], OFF_BIT_CHAR
+			inc EDI
+			
+			; Write closing 0
+			mov byte [EDI], 0
+			
+			mov ESI, string_a
+			call reverse_string
+			
 			; Write "bin" at the end of string_a
 			mov ESI, binary_base_identifier
 			call clone_string_into_update_edi
@@ -159,6 +190,7 @@ convert_number_bin:
 convert_dec_number:
 	push ESI
 	push EBX
+	push EDX
 		; Result = EAX
 		xor EAX, EAX
 		mov ESI, token_space
@@ -184,6 +216,9 @@ convert_dec_number:
 			jmp .cycle
 		
 		.done_cycle:
+			mov EBX, 10
+			div EBX
+	pop EDX
 	pop EBX
 	pop ESI
 	ret
@@ -215,6 +250,10 @@ token_hex_bin:
 	push EDI
 		; Write the bits to string_a
 		mov EDI, string_a
+		
+		; Write first zero:
+		mov byte [EDI], OFF_BIT_CHAR
+		inc EDI
 	
 		; Expand every character in token_space as being a hex digit
 		mov ESI, token_space
@@ -229,11 +268,11 @@ token_hex_bin:
 			jmp .cycle
 			
 		.done:
-			; Put "hex" at the end of string_a
-			mov ESI, hexadecimal_base_identifier
+			; Put "bin" at the end of string_a
+			mov ESI, binary_base_identifier
 			call clone_string_into_update_edi
-	pop ESI
 	pop EDI
+	pop ESI
 	ret
 
 
@@ -243,8 +282,13 @@ token_hex_bin:
 token_oct_bin:
 	push ESI
 	push EDI
+		
 		; Write the bits to string_a
 		mov EDI, string_a
+		
+		; Write first zero:
+		mov byte [EDI], OFF_BIT_CHAR
+		inc EDI
 	
 		; Expand every character in token_space as being a hex digit
 		mov ESI, token_space
@@ -259,8 +303,8 @@ token_oct_bin:
 			jmp .cycle
 			
 		.done:
-			; Put "oct" at the end of string_a
-			mov ESI, octal_base_identifier
+			; Put "bin" at the end of string_a
+			mov ESI, binary_base_identifier
 			call clone_string_into_update_edi
 	pop EDI
 	pop ESI
@@ -318,6 +362,7 @@ expand_hex_digit:
 			
 			cmp AL, 'A'
 			jae .above_a
+			jmp .below_a
 			
 		.above_a:
 			cmp AL, 'F'
@@ -339,6 +384,7 @@ expand_hex_digit:
 	
 		.below_zero:
 		.above_f:
+		.below_a:
 			; It's not a valid hex digit
 			; Ignore it.
 			jmp .end
@@ -375,8 +421,9 @@ write_last_three_bits:
 write_n_bits:
 	push ECX
 	push AX
+		ror AL, CL
 		.bit_cycle:
-			ror AL, 1 ; Move next bit into carry flag
+			rol AL, 1 ; Move next bit into carry flag
 			call write_carry_bit
 			loop .bit_cycle
 	pop AX
@@ -407,11 +454,11 @@ is_token_valid_number:
 	push ESI
 	push EDI
 		; check that token has more than 3 characters
-		mov EBX, token_space
+		mov EAX, token_space
 		call get_string_length
-		; ECX = token length
+		; EBX = token length
 		
-		cmp ECX, 3
+		cmp EBX, 3
 		ja .more_than_three
 			; Three or less characters.
 			jmp .return_false
@@ -484,6 +531,7 @@ is_token_valid_number:
 ; Expects the digit to be checked to be in AH, and the base (2, 8, 10, or 16) in AL.
 ; Returns true or false in ZF.
 is_valid_digit:
+	push EAX
 	push EBX
 	push ECX
 	push EDX
@@ -494,8 +542,8 @@ is_valid_digit:
 		mov EBX, digits_chars
 		
 		push ECX
-			xor ECX, ECX ; EAX = 0
-			mov CL, AH
+			xor ECX, ECX ; ECX = 0
+			mov CL, AL
 			
 			add EBX, ECX
 		pop ECX
@@ -525,5 +573,6 @@ is_valid_digit:
 	pop EDX
 	pop ECX
 	pop EBX
+	pop EAX
 	ret
 
