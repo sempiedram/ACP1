@@ -115,6 +115,133 @@ token_bin_bin:
 	ret
 
 
+; This method converts the string at token_space which should be
+; a valid hexadecimal number, into a binary string number.
+; The result is stored in string_a.
+token_hex_bin:
+	push ESI
+	push EDI
+		; Expand every character in token_space as being a hex digit
+		mov ESI, token_space
+		
+		.cycle:
+			cmp byte [ESI], 0
+			je .done
+			
+			call expand_hex_digit
+			
+			inc ESI
+			jmp .cycle
+			
+		.done:
+			; Put "hex" at the end of string_a
+			mov ESI, hexadecimal_base_identifier
+			call clone_string_into_update_edi
+	pop ESI
+	pop EDI
+	ret
+
+
+; This method expands the character pointed at by ESI which should be
+; a valid hexadecimal number into it's binary equivalent.
+; It modifies EDI to point to the byte after the last bit that was written.
+expand_hex_digit:
+	push AX
+		mov AL, byte [ESI]
+		
+		cmp AL, '0'
+		jae .above_zero
+		jmp .below_zero
+		
+		.above_zero:
+			cmp AL, '9'
+			jbe .under_nine
+			
+			; It's over 9
+			
+			cmp AL, 'A'
+			jae .above_a
+			
+		.above_a:
+			cmp AL, 'F'
+			jbe .under_f
+			jmp .above_f
+		
+		.under_f:
+			; It's one of "ABCDEF"
+			sub AL, 'A'
+			add AL, 10 ; Make up for the subtraction of 'A'
+			call write_last_four_bits
+			jmp .end
+		
+		.under_nine:
+			; It's one of "0123456789"
+			sub AL, '0'
+			call write_last_four_bits
+			jmp .end
+	
+		.below_zero:
+		.above_f:
+			; It's not a valid hex digit
+			; Ignore it.
+			jmp .end
+		
+		.end:
+	pop AX
+	ret
+
+
+; Writes the last four bits of the number at AL into the bytes
+; pointed at by EDI. Updates EDI to point to the next byte after
+; the four bits are written.
+write_last_four_bits:
+	push ECX
+		mov ECX, 4 ; Print 4 bits
+		call write_n_bits
+	pop ECX
+	ret
+
+
+; Writes the last three bits of the number at AL into the bytes
+; pointed at by EDI. Updates EDI to point to the next byte after
+; the three bits are written.
+write_last_three_bits:
+	push ECX
+		mov ECX, 3 ; Print 3 bits
+		call write_n_bits
+	pop ECX
+	ret
+
+
+; Rotates AL n (stored in ECX) times, writing each bit rotated into the bytes pointed at by
+; EDI. Updates EDI.
+write_n_bits:
+	push ECX
+	push AX
+		.bit_cycle:
+			ror AL, 1 ; Move next bit into carry flag
+			call write_carry_bit
+			loop .bit_cycle
+	pop AX
+	pop ECX
+	ret
+
+
+; Writes the carry bit into the EDI byte.
+write_carry_bit:
+	jc .write_one
+		mov byte [EDI], OFF_BIT_CHAR
+		inc EDI
+		jmp .end
+			
+	.write_one:
+		mov byte [EDI], ON_BIT_CHAR
+		inc EDI
+	
+	.end:
+	ret
+
+
 ; Checks if token_space is a valid number.
 is_token_valid_number:
 	push EAX
