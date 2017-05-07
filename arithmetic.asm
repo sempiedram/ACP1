@@ -452,9 +452,9 @@ convert_to_postfix:
 						call is_stack_empty
 						je .end_parenthesis_pop_cycle
 						call peek_token_from_stack
-						; Stop cycle if token is ')':
-						cmp byte [token_space], CLOSE_PARENTHESIS
-						je .pop_close_parenthesis
+						; Stop cycle if token is '(':
+						cmp byte [token_space], OPEN_PARENTHESIS
+						je .pop_open_parenthesis
 						
 							; ; pop operator and put it on the new expression
 							
@@ -466,12 +466,10 @@ convert_to_postfix:
 							
 						; }
 							jmp .parenthesis_pop_cycle
-						.pop_close_parenthesis:
+						.pop_open_parenthesis:
+							; pop open parenthesis
 							call pop_token_from_stack
 						.end_parenthesis_pop_cycle:
-						
-						; pop open parenthesis
-						call pop_token_from_stack
 						
 						; previous was number = true
 						mov byte [previous_was_number], 1
