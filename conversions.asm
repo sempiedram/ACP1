@@ -104,7 +104,53 @@ token_dec_bin:
 		call convert_dec_number
 		
 		; 2. Convert number to binary
-		; call convert_number_bin
+		call convert_number_bin
+	ret
+
+
+; This method converts the number in EAX to a binary number string in string_a.
+convert_number_bin:
+	push EAX
+	push EBX
+	push ECX
+	push EDX
+	push ESI
+	push EDI
+		mov EDI, string_a
+		
+		; EAX = quotient
+		xor EDX, EDX ; EDX = 0
+		mov ECX, 2 ; Divisor
+		
+		.cycle:
+		cmp EAX, 0
+		je .cycle_done
+		; while quotient != 0 {
+		
+			; divide number by 2
+			div ECX
+			; Now EAX = EAX/2 and EDX = EAX%2
+			
+			; number = division quotient
+			; new bit = division remainder
+			
+			ror EDX
+				; write new bit
+				call write_carry_bit
+			rol EDX
+			
+			jmp .cycle
+		; }
+		.cycle_done:
+			; Write "bin" at the end of string_a
+			mov ESI, binary_base_identifier
+			call clone_string_into_update_edi
+	pop EDI
+	pop ESI
+	pop EDX
+	pop ECX
+	pop EBX
+	pop EAX
 	ret
 
 
