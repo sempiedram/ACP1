@@ -90,7 +90,7 @@ is_token_valid_number:
 		mov AH, byte [ESI] ; Get next character
 		
 			; if character is a valid digit in base {
-			; call is_valid_digit
+			call is_valid_digit
 			jne .return_false
 			
 				; continue with next character
@@ -115,7 +115,7 @@ is_token_valid_number:
 		
 		.return_false:
 			xor AL, AL
-			inc AL
+			inc AL ; ZF = false
 			jmp .end
 		
 		.end:
@@ -124,5 +124,46 @@ is_token_valid_number:
 	pop ECX
 	pop EBX
 	pop EAX
+	ret
+
+
+; Expects the digit to be checked to be in AH, and the base (2, 8, 10, or 16) in AL.
+; Returns true or false in ZF.
+is_valid_digit:
+	push EBX
+	push ECX
+	push EDX
+		; Address of where to look for the character:
+		mov ECX, digits_chars
+		
+		; Limit of digits:
+		mov EBX, digits_chars
+		add EBX, AH
+		
+		mov DL, byte [EBX] ; Save original byte
+			mov byte [EBX], 0 ; Cut string
+			
+			push EBX
+				mov BL, AH ; Moves digit being checked into BL
+				call find_character ; Look for character
+			pop EBX
+		mov byte [EBX], DL ; Restore original byte
+		
+		jc .return_true
+		jmp .return_false
+	
+		.return_true:
+			xor AL, AL ; ZF = true
+			jmp .end
+	
+		.return_false:
+			xor AL, AL ; ZF = false
+			inc AL
+			jmp .end
+		
+		.end:
+	pop EDX
+	pop ECX
+	pop EBX
 	ret
 
