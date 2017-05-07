@@ -134,10 +134,10 @@ convert_number_bin:
 			; number = division quotient
 			; new bit = division remainder
 			
-			ror EDX
+			ror EDX, 1
 				; write new bit
 				call write_carry_bit
-			rol EDX
+			rol EDX, 1
 			
 			jmp .cycle
 		; }
@@ -165,6 +165,7 @@ convert_dec_number:
 		
 		.cycle:
 			; Next byte:
+			xor EBX, EBX ; EBX = 0
 			mov BL, byte [ESI]
 			
 			; Stop at first 0
@@ -174,7 +175,7 @@ convert_dec_number:
 			; Get next digit's value:
 			sub BL, '0'
 			
-			add EAX, BL
+			add EAX, EBX
 			mov EBX, 10
 			mul EBX
 			
@@ -435,7 +436,9 @@ is_token_valid_number:
 		.valid_base:
 		
 		mov ESI, token_space
+		
 		; for every character behind the base {
+		.cycle:
 		cmp ESI, EBX
 		jae .no_more_characters
 		mov AH, byte [ESI] ; Get next character
@@ -489,7 +492,13 @@ is_valid_digit:
 		
 		; Limit of digits:
 		mov EBX, digits_chars
-		add EBX, AH
+		
+		push ECX
+			xor ECX, ECX ; EAX = 0
+			mov CL, AH
+			
+			add EBX, ECX
+		pop ECX
 		
 		mov DL, byte [EBX] ; Save original byte
 			mov byte [EBX], 0 ; Cut string
