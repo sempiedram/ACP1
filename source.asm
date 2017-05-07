@@ -120,6 +120,12 @@
 			
 			; Too many tokens after the token pointed at by error_extra_info2
 			REASON_TOO_MANY_AFTER equ 6
+			
+			; There was an expression which didn't get enough operands to be evaluated.
+			REASON_NOT_ENOUGH_OPERANDS equ 7
+			
+			; There were too many operands in the expression.
+			REASON_TOO_MANY_OPERANDS equ 8
 		
 		; The a variable's name is not valid.
 		; The token is in the string pointed at by error_extra_info2.
@@ -206,6 +212,8 @@
 			str_reason_not_enough_tokens db "The expression doesn't have enough tokens to be processed.", 0
 			str_reason_multiple_result_base db "The expression has multiple base result indicators.", 0
 			str_too_many_tokens_after db "There are too many tokens after: '", 0
+			str_not_enough_operands_for db "The following operator doesn't have enough operands: '", 0
+			str_too_many_operands db "The expression has too many operands.", 0
 	
 	; String memory spaces:
 		; This is the string space for user input
@@ -535,7 +543,22 @@ print_invalid_expression_reason:
 			PutStr str_too_many_tokens_after
 			PutStr dword [error_extra_info2]
 			PutStr str_close_string
+			jmp .end
 		.not_too_many_tokens:
+		
+		cmp AL, REASON_NOT_ENOUGH_OPERANDS
+		jne .not_not_enough_operands
+			PutStr str_not_enough_operands_for
+			PutStr dword [error_extra_info2]
+			PutStr str_close_string
+			jmp .end
+		.not_not_enough_operands:
+		
+		cmp AL, REASON_TOO_MANY_OPERANDS
+		jne .not_too_many_operands
+			PutStr str_too_many_operands
+			jmp .end
+		.not_too_many_operands:
 		
 		.end:
 		nwln
