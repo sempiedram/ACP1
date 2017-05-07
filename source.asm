@@ -3,6 +3,7 @@
 %include  "io.mac"
 
 %include  "arithmetic.asm"
+%include  "arithmetic_preprocessing.asm"
 %include  "categories.asm"
 %include  "commands.asm"
 %include  "identation.asm"
@@ -138,6 +139,9 @@
 		
 		; For showing the found result base:
 		str_found_result_base db "Result base: '", 0
+		
+		; Used when showing the result of arithmetic_preprocessing.
+		str_arithmetic_preprocessing_result db "Preprocessed (arithmetic): '", 0
 		
 		; For printing the resulting postfix expression.
 		str_postfix_result db "Postfix equivalent expression: '", 0
@@ -405,6 +409,8 @@ handle_error:
 	; Do nothing if error_code is NO_ERROR
 	cmp byte [error_code], NO_ERROR
 	je .end
+	
+	nwln
 	
 	cmp byte [error_code], ERROR_NO_RESULT_BASE_INDICATOR
 	jne .not_base_indicator
