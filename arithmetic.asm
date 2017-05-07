@@ -23,6 +23,14 @@ process_arithmetic:
 		je .no_error_2
 			jmp .end
 		.no_error_2:
+		
+		; Print the resulting expression after arithmetic_preprocessing.
+		
+		call print_identation
+		PutStr str_arithmetic_preprocessing_result
+		PutStr user_input
+		PutStr str_close_string
+		nwln
 	
 	; 3. Check that it's a valid arithmetic expression.
 	
