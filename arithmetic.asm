@@ -16,7 +16,13 @@ process_arithmetic:
 	
 	; 2. Do the arithmetic preprocessing.
 	
-		; call arithmetic_preprocessing
+		call arithmetic_preprocessing
+		
+		; Check that no errors were produced.
+		cmp byte [error_code], NO_ERROR
+		je .no_error_2
+			jmp .end
+		.no_error_2:
 	
 	; 3. Check that it's a valid arithmetic expression.
 	
@@ -26,6 +32,7 @@ process_arithmetic:
 	
 		call extract_result_base
 		
+		; Check that no errors were produced.
 		cmp byte [error_code], NO_ERROR
 		je .no_error_4
 			jmp .end
@@ -46,6 +53,7 @@ process_arithmetic:
 	
 		call convert_to_postfix
 		
+		; Check that no errors were produced.
 		cmp byte [error_code], NO_ERROR
 		je .no_error_6
 			jmp .end
