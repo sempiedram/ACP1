@@ -6,6 +6,7 @@
 %include  "arithmetic_preprocessing.asm"
 %include  "categories.asm"
 %include  "commands.asm"
+%include  "conversions.asm"
 %include  "identation.asm"
 %include  "strings.asm"
 %include  "tokens.asm"
