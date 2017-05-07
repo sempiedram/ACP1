@@ -168,10 +168,9 @@ count_repetitions_in_string:
 	ret
 
 
-; Clones the string at ESI, into EDI
-clone_string_into:
+; Clones the string at ESI, into EDI. Updates EDI.
+clone_string_into_update_edi:
 	push ESI
-	push EDI
 	push AX
 		.cycle:
 			; Move the next byte
@@ -189,8 +188,15 @@ clone_string_into:
 			
 		.end:
 	pop AX
-	pop EDI
 	pop ESI
+	ret
+
+
+; Clones the string at ESI, into EDI
+clone_string_into:
+	push EDI
+		call clone_string_into_update_edi
+	pop EDI
 	ret
 
 
