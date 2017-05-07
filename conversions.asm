@@ -102,9 +102,14 @@ convert_token_to_binary:
 token_bin_bin:
 	push ESI
 	push EDI
+		; Just copy the token
 		mov ESI, token_space
 		mov EDI, string_a
-		call clone_string_into
+		call clone_string_into_update_edi
+		
+		; Add "bin" to the result
+		mov ESI, binary_base_identifier
+		call clone_string_into_update_edi
 	pop EDI
 	pop ESI
 	ret
