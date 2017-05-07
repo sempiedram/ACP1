@@ -18,7 +18,7 @@ convert_numbers_to_binary:
 			jne .not_number
 			
 				; convert token to binary
-				; call convert_token_to_binary
+				call convert_token_to_binary
 				; Now: string_a = number converted
 				
 				; copy result into user_input_swap
@@ -43,6 +43,56 @@ convert_numbers_to_binary:
 		; }
 		.no_more_tokens:
 	pop EDI
+	pop ESI
+	ret
+
+
+; Converts token_space's string to binary.
+; Assumes that token_space is a valid number.
+; Result: string_a, number converted to binary
+convert_token_to_binary:
+	push ESI
+	push EAX
+		mov ESI, token_space
+		call find_next_zero_esi
+		dec ESI
+		dec ESI
+		dec ESI ; ESI = start of token's base.
+		
+		call get_base_from_string
+		; AL is now 2, 8, 10, or 16
+		
+		mov byte [ESI], 0 ; Cut token's base
+		
+		cmp AL, 2
+		jne .not_binary
+			call token_bin_bin
+			jmp .end
+		.not_binary:
+		
+		cmp AL, 8
+		jne .not_octal
+			call token_oct_bin
+			jmp .end
+		.not_octal:
+		
+		cmp AL, 10
+		jne .not_decimal
+			call token_dec_bin
+			jmp .end
+		.not_decimal:
+		
+		cmp AL, 16
+		jne .not_hexadecimal
+			call token_hex_bin
+			jmp .end
+		.not_hexadecimal:
+		
+		; It's not a valid base.
+		; TODO: decide if an error should be raised here.
+		
+		.end:
+	pop EAX
 	pop ESI
 	ret
 
