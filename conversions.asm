@@ -64,6 +64,91 @@ convert_numbers_to_binary:
 
 
 
+; This method converts the final result, which should be stored in string_a,
+; from a binary string into the base that the user specified, which should be stored
+; in the result_base byte (as 2, 8, 10, or 16).
+; The result ends up in string_b.
+convert_final_result:
+	push AX
+		; Test the result_base byte.
+
+		mov AL, byte [result_base]
+
+		cmp AL, 2
+		jne .not_binary
+			call string_a_bin_bin
+			jmp .end
+		.not_binary:
+
+		cmp AL, 8
+		jne .not_octal
+			call string_a_bin_oct
+			jmp .end
+		.not_octal:
+
+		cmp AL, 10
+		jne .not_decimal
+			call string_a_bin_dec
+			jmp .end
+		.not_decimal:
+
+		cmp AL, 16
+			call string_a_bin_hex
+			jmp .end
+		.not_hexadecimal:
+
+		; It's not a valid base, for now, just copy the token
+		; as the result.
+
+		mov ESI, string_a
+		mov EDI, string_b
+		call clone_string_into
+
+		.end:
+	pop AX
+	ret
+
+
+; Converts the string at string_a from binary to binary.
+; The result ends up in string_b.
+string_a_bin_bin:
+	push ESI
+	push EDI
+		; Just copy string_a to string_b
+
+		mov ESI, string_a
+		mov EDI, string_b
+		call clone_string_into
+	pop EDI
+	pop ESI
+	ret
+
+
+; Converts the string at string_a from binary to octal.
+; The result ends up in string_b.
+string_a_bin_oct:
+		; The algorithm is:
+		; 1. Remove the "bin" part of the string.
+		; 2. Extend the number to have a multiple of 3 bits.
+		; 3. Check each group of three bits, and convert to octal.
+	ret
+
+
+; Converts the string at string_a from binary to decimal.
+; The result ends up in string_b.
+string_a_bin_dec:
+		
+	ret
+
+
+; Converts the string at string_a from binary to hexadecimal.
+; The result ends up in string_b.
+string_a_bin_hex:
+		
+	ret
+
+
+
 ; Converts token_space's string to binary.
 ; Assumes that token_space is a valid number.
 ; Result: string_a, number converted to binary

@@ -106,7 +106,7 @@ process_arithmetic:
 	
 	; 8. Convert the resulting number from binary into the result base.
 	
-		; call convert_final_result
+		call convert_final_result
 	
 	.end:
 	call decrease_identation_level
