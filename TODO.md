@@ -7,6 +7,8 @@ This is a listing of the things that are still "to be done". Some are not necess
 ## List:
 
 - EXTRA: Implement the power operation.
+- Implement check_valid_arithmetic
+    - Implement checking of parenthesis matching
 - Show process of conversions.
     - Show bin -> bin
     - Show oct -> bin
@@ -23,4 +25,9 @@ This is a listing of the things that are still "to be done". Some are not necess
     - Show division process
     - EXTRA: Show power process
 - Add other commands
+- Implement trim_unnecessary_bits function
+    This function should trim unnecessary bits from binary number strings such
+    as "1101101bin" -> "101101bin", or "000001001bin" -> "01001bin".
+- Deal with expressions that result in negative numbers (because the conversion process takes the binary result as a big positive number).
+
 
