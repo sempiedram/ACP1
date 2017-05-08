@@ -374,59 +374,19 @@ token_dec_bin:
 
 ; This method converts the number in EAX to a binary number string in string_a.
 convert_number_bin:
-	push EAX
-	push EBX
-	push ECX
-	push EDX
-	push ESI
 	push EDI
-		mov EDI, string_a
-		
-		; EAX = quotient
-		xor EDX, EDX ; EDX = 0
-		mov ECX, 2 ; Divisor
-		
-		.cycle:
-		cmp EAX, 0
-		je .cycle_done
-		; while quotient != 0 {
-		
-			xor EDX, EDX ; EDX = 0
-			
-			; divide number by 2
-			div ECX
-			; Now EAX = EAX/2 and EDX = EAX%2
-			
-			; number = division quotient
-			; new bit = division remainder
-			
-			ror EDX, 1
-				; write new bit
-				call write_carry_bit
-			rol EDX, 1
-			
-			jmp .cycle
-		; }
-		.cycle_done:
-			; Write final '0':
-			mov byte [EDI], OFF_BIT_CHAR
-			inc EDI
-			
-			; Write closing 0
-			mov byte [EDI], 0
-			
-			mov ESI, string_a
-			call reverse_string
-			
-			; Write "bin" at the end of string_a
-			mov ESI, binary_base_identifier
-			call clone_string_into_update_edi
-	pop EDI
+	push ESI
+	push BX
+		mov BL, 2 ; Convert to binary
+		mov EDI, string_a ; Set destiny to string_a
+		call convert_number_to_base
+
+		; Write the "bin" part of the result.
+		mov ESI, binary_base_identifier
+		call clone_string_into
+	pop BX
 	pop ESI
-	pop EDX
-	pop ECX
-	pop EBX
-	pop EAX
+	pop EDI
 	ret
 
 
