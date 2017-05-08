@@ -1,5 +1,6 @@
 
 
+
 ; This method converts any valid numbers in user_input to binary.
 convert_numbers_to_binary:
 	push ESI
@@ -62,6 +63,7 @@ convert_numbers_to_binary:
 	ret
 
 
+
 ; Converts token_space's string to binary.
 ; Assumes that token_space is a valid number.
 ; Result: string_a, number converted to binary
@@ -114,6 +116,7 @@ convert_token_to_binary:
 	ret
 
 
+
 ; This method converts the string at token_space into binary.
 ; The result is stored in string_a.
 token_dec_bin:
@@ -125,6 +128,7 @@ token_dec_bin:
 		call convert_number_bin
 	pop EAX
 	ret
+
 
 
 ; This method converts the number in EAX to a binary number string in string_a.
@@ -185,6 +189,7 @@ convert_number_bin:
 	ret
 
 
+
 ; Converts the decimal number string at token_space into a number
 ; and returns that in the EAX register.
 convert_dec_number:
@@ -224,6 +229,7 @@ convert_dec_number:
 	ret
 
 
+
 ; This method converts the string at token_space into binary.
 ; The result is stored in string_a.
 token_bin_bin:
@@ -240,6 +246,7 @@ token_bin_bin:
 	pop EDI
 	pop ESI
 	ret
+
 
 
 ; This method converts the string at token_space which should be
@@ -274,6 +281,7 @@ token_hex_bin:
 	pop EDI
 	pop ESI
 	ret
+
 
 
 ; This method converts the string at token_space which should be
@@ -311,6 +319,7 @@ token_oct_bin:
 	ret
 
 
+
 ; This method expands the character pointed at by ESI which should be
 ; a valid octal digit into it's binary equivalent.
 ; It modifies EDI to point to the byte after the last bit that was written.
@@ -341,6 +350,7 @@ expand_oct_digit:
 		.end:
 	pop AX
 	ret
+
 
 
 ; This method expands the character pointed at by ESI which should be
@@ -394,6 +404,7 @@ expand_hex_digit:
 	ret
 
 
+
 ; Writes the last four bits of the number at AL into the bytes
 ; pointed at by EDI. Updates EDI to point to the next byte after
 ; the four bits are written.
@@ -405,6 +416,7 @@ write_last_four_bits:
 	ret
 
 
+
 ; Writes the last three bits of the number at AL into the bytes
 ; pointed at by EDI. Updates EDI to point to the next byte after
 ; the three bits are written.
@@ -414,6 +426,7 @@ write_last_three_bits:
 		call write_n_bits
 	pop ECX
 	ret
+
 
 
 ; Rotates AL n (stored in ECX) times, writing each bit rotated into the bytes pointed at by
@@ -431,6 +444,7 @@ write_n_bits:
 	ret
 
 
+
 ; Writes the carry bit into the EDI byte.
 write_carry_bit:
 	jc .write_one
@@ -444,6 +458,7 @@ write_carry_bit:
 	
 	.end:
 	ret
+
 
 
 ; Checks if token_space is a valid number.
@@ -528,6 +543,7 @@ is_token_valid_number:
 	ret
 
 
+
 ; Expects the digit to be checked to be in AH, and the base (2, 8, 10, or 16) in AL.
 ; Returns true or false in ZF.
 is_valid_digit:
@@ -575,4 +591,126 @@ is_valid_digit:
 	pop EBX
 	pop EAX
 	ret
+
+
+
+; Converts the string at ESI (assuming that it's a binary number, e.g: 1101bin, 0110bin) into a number.
+; The result is returned in EAX.
+convert_bin_str_number:
+	push ESI
+	push EBX
+	push ECX
+		push ESI
+			; Remove "bin" from number.
+			call find_next_zero_esi
+			dec ESI
+			dec ESI
+			dec ESI
+			mov byte [ESI], 0
+		pop ESI
+		
+		; Keep count of number of bits in CX.
+		; CX = 0
+		xor CX, CX
+		
+		; Result = EAX = 0
+		xor EAX, EAX
+		
+		cmp byte [ESI], OFF_BIT_CHAR
+		je .first_was_zero
+			; First bit was one
+			not EAX ; Invert all bits initially
+		.first_was_zero:
+		
+		; Scan the token:
+		.cycle:
+			; Get next character
+			mov BL, byte [ESI]
+			
+			; Check end of token:
+			cmp BL, 0
+			je .bits_done
+			
+			; Check if it's a bit:
+			cmp BL, OFF_BIT_CHAR
+			jne .not_zero
+				; Is zero
+				inc CX ; Increase count
+				
+				rol EAX, 1 ; Write a 0
+				and EAX, 0xFFFFFFFE ; Mask last bit off
+				jmp .next_character
+			.not_zero:
+			
+			cmp BL, ON_BIT_CHAR
+			jne .not_one
+				; Is one
+				inc CX ; Increase count
+				
+				; Write a 1 :
+				rol EAX, 1
+				or EAX, 1 ; Mask last bit on
+				jmp .next_character
+			.not_one:
+			
+			; It's not recognized.
+			
+			.next_character:
+			inc ESI
+			
+			cmp CX, 32
+			ja .too_many_bits
+			
+			jmp .cycle
+			
+		.too_many_bits:
+			; TODO: Handle when there are too many bits.
+		.bits_done:
+			; call find_next_zero_esi ; Restore the b of bin
+			; mov byte [ESI], 'b'
+	pop ECX
+	pop EBX
+	pop ESI
+	ret
+
+
+
+; Converts the number in EAX into a binary string.
+; The result is written in the string at EDI.
+; 00000000000000000000000000001011 -> 00000000000000000000000000001011bin
+; 11111111111111110101011011101110 -> 11111111111111110101011011101110bin
+convert_number_bin_str:
+	push ESI
+	push ECX
+	
+		; The algorithm is to rotate the 32 bits, writing each bit
+		; into the string. At the end, "bin" is added to the string.
+		
+		mov ECX, 32 ; To loop/roll 32 bits.
+		
+		.cycle:
+			rol EAX, 1
+			jnc .was_zero
+				; Write one:
+				mov byte [EDI], ON_BIT_CHAR
+				inc EDI
+				jmp .next_bit
+			.was_zero:
+			; Write zero:
+			mov byte [EDI], OFF_BIT_CHAR
+			inc EDI
+			
+			.next_bit:
+			loop .cycle
+			
+		; EAX should be unmodified now.
+		
+		; Write the "bin" part:
+		mov ESI, binary_base_identifier
+		call clone_string_into
+		
+	pop ECX
+	pop ESI
+	ret
+
 
