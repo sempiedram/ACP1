@@ -71,7 +71,7 @@ evaluate_postfix:
 					push ESI
 					push EDI
 						mov ESI, token_space
-						mov EDI, string_a
+						mov EDI, string_b
 						call clone_string_into
 					pop EDI
 					pop ESI
@@ -100,11 +100,11 @@ evaluate_postfix:
 				; pop operand into string_a
 				call pop_token_from_stack
 				
-				; Moves token into string_b
+				; Moves token into string_a
 				push ESI
 				push EDI
 					mov ESI, token_space
-					mov EDI, string_b
+					mov EDI, string_a
 					call clone_string_into
 				pop EDI
 				pop ESI
@@ -151,7 +151,7 @@ evaluate_postfix:
 			; if stack has another token {
 			call pop_token_from_stack
 			cmp byte [token_space], 0
-			jne .two_tokens
+			je .not_two_tokens
 			
 				; raise error, too many operands
 				mov byte [error_code], ERROR_INVALID_EXPRESSION
@@ -159,7 +159,9 @@ evaluate_postfix:
 				jmp .return
 				
 			; }
-			.two_tokens:
+			.not_two_tokens:
+			
+			call restore_token
 			
 			; copy that token into string_a
 			push ESI
@@ -170,6 +172,7 @@ evaluate_postfix:
 			pop EDI
 			pop ESI
 			
+			jmp .return
 		; }else {
 		.no_result:
 		
@@ -246,9 +249,37 @@ evaluate_operation:
 ; The two operands should be in string_a, and string_b.
 ; The result ends up in token_space.
 evaluate_addition:
+	push EAX
+	push EBX
+	push ECX
+	push ESI
+	push EDI
 		; 1. Convert both operands to numbers.
+		mov ESI, string_b
+		call convert_bin_str_number
+		mov EBX, EAX
+		
+		mov ESI, string_a
+		call convert_bin_str_number
+		
+		; Now EAX = first operand
+		; Now EBX = second operand
+		
 		; 2. Add numbers.
+		mov ECX, EAX
+		add ECX, EBX
+		
 		; 3. Convert result to binary number string (store it in token_space).
+		push EAX
+			mov EAX, ECX
+			mov EDI, token_space
+			call convert_number_bin_str
+		pop EAX
+	pop EDI
+	pop ESI
+	pop ECX
+	pop EBX
+	pop EAX
 	ret
 
 
@@ -256,9 +287,38 @@ evaluate_addition:
 ; The two operands should be in string_a, and string_b.
 ; The result ends up in token_space.
 evaluate_subtraction:
+	push EAX
+	push EBX
+	push ECX
+	push ESI
+	push EDI
 		; 1. Convert both operands to numbers.
+		mov ESI, string_b
+		call convert_bin_str_number
+		mov EBX, EAX
+		
+		mov ESI, string_a
+		call convert_bin_str_number
+		
+		; Now EAX = first operand
+		; Now EBX = second operand
+		
 		; 2. Subtract numbers.
+		mov ECX, EAX
+		sub ECX, EBX
+		; TODO: Check overflow.
+		
 		; 3. Convert result to binary number string (store it in token_space).
+		push EAX
+			mov EAX, ECX
+			mov EDI, token_space
+			call convert_number_bin_str
+		pop EAX
+	pop EDI
+	pop ESI
+	pop ECX
+	pop EBX
+	pop EAX
 	ret
 
 
@@ -266,9 +326,38 @@ evaluate_subtraction:
 ; The two operands should be in string_a, and string_b.
 ; The result ends up in token_space.
 evaluate_multiplication:
+	push EAX
+	push EBX
+	push EDX
+	push ESI
+	push EDI
 		; 1. Convert both operands to numbers.
+		mov ESI, string_b
+		call convert_bin_str_number
+		mov EBX, EAX
+		
+		mov ESI, string_a
+		call convert_bin_str_number
+		
+		; Now EAX = first operand
+		; Now EBX = second operand
+		
 		; 2. Multiply numbers.
+		xor EDX, EDX
+		mul EBX
+		
+		; Now EDX:EAX = result of multiplication.
+		
+		; TODO: Handle negative numbers.
+		
 		; 3. Convert result to binary number string (store it in token_space).
+		mov EDI, token_space
+		call convert_number_bin_str
+	pop EDI
+	pop ESI
+	pop EDX
+	pop EBX
+	pop EAX
 	ret
 
 
@@ -276,9 +365,39 @@ evaluate_multiplication:
 ; The two operands should be in string_a, and string_b.
 ; The result ends up in token_space.
 evaluate_division:
+	push EAX
+	push EBX
+	push EDX
+	push ESI
+	push EDI
 		; 1. Convert both operands to numbers.
+		mov ESI, string_b
+		call convert_bin_str_number
+		mov EBX, EAX
+		
+		mov ESI, string_a
+		call convert_bin_str_number
+		
+		; Now EAX = first operand
+		; Now EBX = second operand
+		
 		; 2. Divide numbers.
+		xor EDX, EDX
+		div EBX
+		
+		; Now EAX = Quotient
+		; Now EDX = Remainder
+		
+		; TODO: Handle negative numbers.
+		
 		; 3. Convert result to binary number string (store it in token_space).
+		mov EDI, token_space
+		call convert_number_bin_str
+	pop EDI
+	pop ESI
+	pop EDX
+	pop EBX
+	pop EAX
 	ret
 
 
@@ -286,10 +405,27 @@ evaluate_division:
 ; The operand should be in string_a.
 ; The result ends up in token_space.
 evaluate_complement:
+	push ESI
+	push EDI
+	push EAX
 		; 1. Convert operand to number.
+		mov ESI, string_a
+		call convert_bin_str_number
+		
+		; Now EAX = first operand
+		
 		; 2. Invert number.
+		not EAX
+		
 		; 3. Add 1 to the number.
-		; 3. Convert result to binary number string (store it in token_space).
+		inc EAX
+		
+		; 4. Convert result to binary number string (store it in token_space).
+		mov EDI, token_space
+		call convert_number_bin_str
+	pop EAX
+	pop EDI
+	pop ESI
 	ret
 
 
