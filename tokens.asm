@@ -113,17 +113,14 @@ get_next_token:
 			mov AL, byte [ESI] ; Save original delimiter (space or 0).
 			mov byte [ESI], 0 ; Replace delimiter with a 0
 		pop ESI
-			
-		push ESI
-			; Clone next token into token_space
-			mov EDI, token_space
-			call clone_string_into
-			
-			call find_next_token_limit
-			mov byte [ESI], AL ; Restore original delimiter
-		pop ESI
-
+		
+		; Clone next token into token_space
+		mov EDI, token_space
+		call clone_string_into
+		
 		call find_next_token_limit
+		mov byte [ESI], AL ; Restore original delimiter
+		
 		.end:
 	pop AX
 	pop EDI
