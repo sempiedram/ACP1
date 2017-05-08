@@ -169,6 +169,9 @@
 		
 		; To show the result of evaluation of the expression.
 		str_evaluation_result db "Result of evaluation: '", 0
+
+		; To show the final result of the evaluation:
+		str_final_result db "Final result: '", 0
 		
 		; For printing all variables.
 		str_defined_variables db "These are the defined variables:", 0
