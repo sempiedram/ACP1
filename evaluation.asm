@@ -202,6 +202,7 @@ evaluate_postfix:
 ; The operands should be in string_a, and string_b (if two operands are required).
 ; The result ends up in token_space
 evaluate_operation:
+	push AX
 	push BX
 		; AL = operation character
 		mov AL, byte [token_space]
@@ -248,6 +249,7 @@ evaluate_operation:
 		
 		.end:
 	pop BX
+	pop AX
 	ret
 
 
