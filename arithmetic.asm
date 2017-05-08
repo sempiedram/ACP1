@@ -78,6 +78,20 @@ process_arithmetic:
 	; 7. Evaluate the postfix expression.
 	
 		call evaluate_postfix
+		
+		; Check that no errors were produced.
+		cmp byte [error_code], NO_ERROR
+		je .no_error_7
+			jmp .end
+		.no_error_7: ; No error in step 7
+		
+		; Print the resulting postfix expression.
+		
+		call print_identation
+		PutStr str_evaluation_result
+		PutStr string_a
+		PutStr str_close_string
+		nwln
 	
 	; 8. Convert the resulting number from binary into the result base.
 	
@@ -573,8 +587,16 @@ token_precedence:
 is_token_binary_number:
 	push EAX
 	push CX
+	push ESI
 	
 		mov EAX, token_space ; To scan token_space
+		
+		; Return false if there's only three characters.
+		call get_string_length
+		cmp EBX, 3
+		ja .more_than_three
+			jmp .return_false
+		.more_than_three:
 		
 		; Keep count of number of bits in CX.
 		; CX = 0
@@ -631,6 +653,8 @@ is_token_binary_number:
 			jmp .end
 		
 		.end:
+		
+	pop ESI
 	pop CX
 	pop EAX
 	ret
