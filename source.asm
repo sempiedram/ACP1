@@ -131,6 +131,9 @@
 		; The a variable's name is not valid.
 		; The token is in the string pointed at by error_extra_info2.
 		ERROR_INVALID_VARIABLE_NAME equ 6
+		
+		; A division by 0 was attempted.
+		ERROR_DIVISION_BY_ZERO equ 7
 
 .DATA
 	; This is the string used as prompt for the next operation:
@@ -207,6 +210,7 @@
 			str_error_invalid_base db "The base given was not recognized: '", 0
 			str_error_no_base_indicator db "The expression doesn't have a base result indicator.", 0
 			str_error_invalid_name db "This token is not a valid variable name: '", 0
+			str_error_division_by_zero db "A division by zero was attempted.", 0
 		
 		; Reasons for errors strings:
 			str_reason_numbers_together db "Two numbers were next to each other in the expression.", 0
@@ -479,12 +483,20 @@ handle_error:
 
 	cmp byte [error_code], ERROR_INVALID_VARIABLE_NAME
 	jne .not_variable_name
+		call print_identation
 		PutStr str_error_invalid_name
 		PutStr dword [error_extra_info2]
 		PutStr str_close_string
 		nwln
 		jmp .end
 	.not_variable_name:
+	
+	cmp byte [error_code], ERROR_DIVISION_BY_ZERO
+	jne .not_division_by_zero
+		call print_identation
+		PutStr str_error_division_by_zero
+		nwln
+	.not_division_by_zero:
 	
 	; cmp byte [error_code], ERROR_
 	; jne .not_

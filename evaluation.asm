@@ -132,6 +132,11 @@ evaluate_postfix:
 				; evaluate operation ; now token_space = result of operation
 				call evaluate_operation
 				
+				cmp byte [error_code], NO_ERROR
+				je .no_error_evaluating
+					jmp .error_evaluating
+				.no_error_evaluating:
+				
 				; push token to stack_space
 				call push_token_to_stack
 				
@@ -185,6 +190,7 @@ evaluate_postfix:
 			jmp .return
 		; }
 		
+		.error_evaluating:
 		.return:
 	pop EAX
 	pop ESI
@@ -381,6 +387,13 @@ evaluate_division:
 		; Now EAX = first operand
 		; Now EBX = second operand
 		
+		; Check that second operand is not zero.
+		cmp EBX, 0
+		jne .not_zero
+			mov byte [error_code], ERROR_DIVISION_BY_ZERO
+			jmp .end
+		.not_zero:
+		
 		; 2. Divide numbers.
 		xor EDX, EDX
 		div EBX
@@ -393,6 +406,8 @@ evaluate_division:
 		; 3. Convert result to binary number string (store it in token_space).
 		mov EDI, token_space
 		call convert_number_bin_str
+		
+		.end:
 	pop EDI
 	pop ESI
 	pop EDX
