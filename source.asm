@@ -235,7 +235,7 @@
 		; This is used to store the postfix expression:
 		expression_space times INPUT_LIMIT db 0
 		
-		; This space is used to compute the postfic expression.
+		; This space is used to compute the postfix expression.
 		stack_space times INPUT_LIMIT db 0
 
 		;This byte field is used to store all defined variables.
