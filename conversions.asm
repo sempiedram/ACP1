@@ -127,26 +127,182 @@ string_a_bin_bin:
 ; Converts the string at string_a from binary to octal.
 ; The result ends up in string_b.
 string_a_bin_oct:
+	push ESI
+	push EAX
+	push BX
+	push EDI
 		; The algorithm is:
-		; 1. Remove the "bin" part of the string.
-		; 2. Extend the number to have a multiple of 3 bits.
-		; 3. Check each group of three bits, and convert to octal.
+
+		; 1. Convert the string to a number:
+		mov ESI, string_a
+		call convert_bin_str_number
+		; Now EAX = value of number
+
+		; 2. Convert number to base (string)
+		mov BL, 8 ; base to convert to 
+		mov EDI, string_b ; Where to write the number.
+		call convert_number_to_base
+		
+		; 3. Add "oct" base identifier
+		mov ESI, octal_base_identifier
+		call clone_string_into
+		.not_binary:
+	pop EDI
+	pop BX
+	pop EAX
+	pop ESI
 	ret
 
 
 ; Converts the string at string_a from binary to decimal.
 ; The result ends up in string_b.
 string_a_bin_dec:
+	push ESI
+	push EAX
+	push BX
+	push EDI
+		; The algorithm is:
+
+		; 1. Convert the string to a number:
+		mov ESI, string_a
+		call convert_bin_str_number
+		; Now EAX = value of number
+
+		; 2. Convert number to base (string)
+		mov BL, 10 ; base to convert to 
+		mov EDI, string_b ; Where to write the number.
+		call convert_number_to_base
 		
+		; 3. Add "dec" base identifier
+		mov ESI, decimal_base_identifier
+		call clone_string_into
+		.not_binary:
+	pop EDI
+	pop BX
+	pop EAX
+	pop ESI
 	ret
 
 
 ; Converts the string at string_a from binary to hexadecimal.
 ; The result ends up in string_b.
 string_a_bin_hex:
+	push ESI
+	push EAX
+	push BX
+	push EDI
+		; The algorithm is:
+
+		; 1. Convert the string to a number:
+		mov ESI, string_a
+		call convert_bin_str_number
+		; Now EAX = value of number
+
+		; 2. Convert number to base (string)
+		mov BL, 16 ; base to convert to 
+		mov EDI, string_b ; Where to write the number.
+		call convert_number_to_base
 		
+		; 3. Add "hex" base identifier
+		mov ESI, hexadecimal_base_identifier
+		call clone_string_into
+		.not_binary:
+	pop EDI
+	pop BX
+	pop EAX
+	pop ESI
 	ret
 
+
+
+; This method should convert a number (stored in the EAX register) to
+; a string (stored at EDI) in the base indicated by BL.
+; No base identifier is added at the end of the string (no "bin", "oct", etc).
+; EDI is modified, it ends pointing to the character after the last digit.
+convert_number_to_base:
+	push ESI
+	push EAX
+	push EBX
+	push ECX
+	push EDX
+		; Divide the number continuously until the result is zero.
+		; After each division, convert the remainder to the
+		;   correct digit.
+		; Add each digit to the result.
+
+		mov byte [EDI], '0' ; Add an initial 0 to the result.
+		inc EDI
+
+		; Save EDI for reversing the digits:
+		mov ECX, EDI
+
+		; For division, EBX must contain only the base:
+		xor EDX, EDX ; EDX = 0
+		mov DL, BL ; EDX = base
+		mov EBX, EDX ; EBX = base
+
+		.cycle:
+			; To divide, EDX must be clear:
+			xor EDX, EDX ; EDX = 0
+			
+			div EBX
+
+			; Now EAX = Quotient
+			; And EDX = Remainder (= DL)
+
+			; Write the digit:
+			call number_to_digit ; Converts number -> digit (in DL)
+			; Now DL = new digit
+			mov byte [EDI], DL
+			inc EDI
+
+			; Check if quotient is zero (conversion ended)
+			cmp EAX, 0
+			je .quotient_zero
+			
+			jmp .cycle
+
+		.quotient_zero:
+			; Now EAX is zero -> conversion ended.
+			
+			; Close the current result string.
+			mov byte [EDI], 0
+
+			; The digits will be reversed because of the algorithm.
+			; Reverse them back:
+			mov ESI, ECX
+			call reverse_string
+	pop EDX
+	pop ECX
+	pop EBX
+	pop EAX
+	pop ESI
+	ret
+
+
+; This method converts the number stored at DL into a digit character
+; and stores it in DL (so the original number is overwritten).
+; If the number doesn't have a corresponding character, it doesn't
+; modify DL.
+number_to_digit:
+	cmp DL, 9
+	ja .higher_nine
+		; It's from 0 to 9
+		add DL, '0' ; Map from 0 -> '0', 9 -> '9'
+		jmp .return
+	.higher_nine:
+		; It's from 10 -> 255
+		sub DL, 10 ; Map from 10 -> 0, 11 -> 1, etc.
+		add DL, 'A' ; Map from 0 -> 'A', 1 -> 'B', etc.
+
+		; If the result is above 'Z' it's not a valid digit, reverse it.
+		cmp DL, 'Z'
+		jbe .return
+
+		sub DL, 'A' ; Reverse DL to original value
+	
+	.return:
+	ret
 
 
 ; Converts token_space's string to binary.
