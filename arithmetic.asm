@@ -85,6 +85,11 @@ process_arithmetic:
 		PutStr expression_space
 		PutStr str_close_string
 		nwln
+		
+		; Check if the expression is empty:
+		cmp byte [expression_space], 0
+		; If it is, do nothing.
+		je .no_expression
 	
 	; 7. Evaluate the postfix expression.
 	
@@ -107,7 +112,14 @@ process_arithmetic:
 	; 8. Convert the resulting number from binary into the result base.
 	
 		call convert_final_result
-	
+
+		call print_identation
+		PutStr str_final_result
+		PutStr string_b
+		PutStr str_close_string
+		nwln
+		
+	.no_expression:
 	.end:
 	call decrease_identation_level
 	ret
@@ -593,14 +605,15 @@ token_precedence:
 	ret
 
 
-; Checks whether token_space is a valid binary number.
-; Returns true or false through the zero flag.
-is_token_binary_number:
+; This method checks whether the string at ESI is a valid binary number.
+; It doesn't modify ESI.
+; Returns the result through the ZF.
+is_binary_number:
 	push EAX
 	push CX
 	push ESI
 	
-		mov EAX, token_space ; To scan token_space
+		mov EAX, ESI
 		
 		; Return false if there's only three characters.
 		call get_string_length
@@ -668,6 +681,16 @@ is_token_binary_number:
 	pop ESI
 	pop CX
 	pop EAX
+	ret
+
+
+; Checks whether token_space is a valid binary number.
+; Returns true or false through the zero flag.
+is_token_binary_number:
+	push ESI
+		mov ESI, token_space ; To scan token_space
+		call is_binary_number
+	pop ESI
 	ret
 
 
