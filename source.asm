@@ -160,6 +160,9 @@
 		
 		; Used when showing the result of arithmetic_preprocessing.
 		str_arithmetic_preprocessing_result db "Preprocessed (arithmetic): '", 0
+
+		; For showing the expression with all numbers converted.
+		str_numbers_converted db "Expression with numbers converted to binary: '", 0
 		
 		; For printing the resulting postfix expression.
 		str_postfix_result db "Postfix equivalent expression: '", 0

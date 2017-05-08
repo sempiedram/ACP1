@@ -56,6 +56,17 @@ process_arithmetic:
 	; 5. Convert every number into binary.
 	
 		call convert_numbers_to_binary
+		
+		; No errors should be generated in this step.
+
+		; Print the resulting expression, with valid numbers
+		; converted into binary.
+
+		call print_identation
+		PutStr str_numbers_converted
+		PutStr user_input
+		PutStr str_close_string
+		nwln
 	
 	; 6. Convert the expression into postfix.
 	
