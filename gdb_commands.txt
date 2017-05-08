@@ -18,3 +18,12 @@ display/5cb &variables_space
 
 ; Shows the first 20 bytes of variables_space as characters:
 display/20cb &variables_space
+
+display/s &expression_space
+display/s &token_space_swap
+display/s &token_space
+display/s &stack_space
+display/s &string_a
+display/s &string_b
+display/s $esi
+display/s $edi
