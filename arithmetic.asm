@@ -35,7 +35,13 @@ process_arithmetic:
 	
 	; 3. Check that it's a valid arithmetic expression.
 	
-		; call check_valid_arithmetic
+		call check_valid_arithmetic
+		
+		; Check that no errors were produced.
+		cmp byte [error_code], NO_ERROR
+		je .no_error_3
+			jmp .end
+		.no_error_3:
 	
 	; 4. Extract from the expression the result base.
 	
@@ -128,6 +134,74 @@ process_arithmetic:
 	.no_expression:
 	.end:
 	call decrease_identation_level
+	ret
+
+
+; Currently only checks that parenthesis are matched (in 
+check_valid_arithmetic:
+	push EAX
+	push ECX
+	push ESI
+		xor ECX, ECX ; count = 0
+		
+		; Scan user_input
+		mov ESI, user_input
+		
+		; Scan cycle:
+		.cycle:
+			; If level < 0 -> there were too many ')'s.
+			cmp ECX, 0
+			jl .not_valid
+			
+			; AL = next character
+			mov AL, byte [ESI]
+			
+			; Stop at first 0
+			cmp AL, 0
+			je .ended
+			
+			; Compare character.
+			cmp AL, OPEN_PARENTHESIS
+			je .open
+			
+			cmp AL, CLOSE_PARENTHESIS
+			je .close
+			
+			; Not a parenthesis, just go to the next one.
+			jmp .next_cycle
+			
+			.open:
+				; Increase depth level when an open parenthesis is found.
+				inc ECX ; count++
+				jmp .next_cycle
+			
+			.close:
+				; Decrease depth level when a close parenthesis is found.
+				dec ECX ; count--
+				jmp .next_cycle
+			
+			.next_cycle:
+				inc ESI
+				jmp .cycle
+		
+		.ended:
+			cmp ECX, 0
+			je .valid
+			jmp .not_valid
+		
+		.valid:
+			; Return no error:
+			mov byte [error_code], NO_ERROR
+			jmp .end
+				
+		.not_valid:
+			mov byte [error_code], ERROR_UNMATCHED_PARENTHESIS
+			jmp .end
+			
+		.end:
+	pop ESI
+	pop ECX
+	pop EAX
 	ret
 
 

@@ -236,6 +236,7 @@
 			str_error_no_base_indicator db "The expression doesn't have a base result indicator.", 0
 			str_error_invalid_name db "This token is not a valid variable name: '", 0
 			str_error_division_by_zero db "A division by zero was attempted.", 0
+			str_error_unmatched_parenthesis db "There were unmatched parenthesis.", 0
 		
 		; Reasons for errors strings:
 			str_reason_numbers_together db "Two numbers were next to each other in the expression.", 0
@@ -521,7 +522,18 @@ handle_error:
 		call print_identation
 		PutStr str_error_division_by_zero
 		nwln
+		jmp .end
 	.not_division_by_zero:
+	
+	cmp byte [error_code], ERROR_UNMATCHED_PARENTHESIS
+	jne .not_parenthesis
+		call print_identation
+		PutStr str_error_unmatched_parenthesis
+		nwln
+		jmp .end
+	.not_parenthesis:
+	
+	
 	
 	; cmp byte [error_code], ERROR_
 	; jne .not_
