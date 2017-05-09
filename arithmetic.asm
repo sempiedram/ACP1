@@ -101,7 +101,7 @@ process_arithmetic:
 			jmp .end
 		.no_error_7: ; No error in step 7
 		
-		; Print the resulting postfix expression.
+		; Print the result of evaluation.
 		
 		call print_identation
 		PutStr str_evaluation_result
