@@ -175,6 +175,7 @@
 
 		; Strings for showing the process and results of conversions:
 			str_result_of_conversion db "Result of conversion: ", 0
+			str_converting_binary_number db "Converting binary number: ", 0
 			str_converting_number_base1 db "Converting number: ", 0
 			str_converting_number_base2 db "To base: ", 0
 			str_division_separator db " / ", 0
