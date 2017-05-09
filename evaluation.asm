@@ -286,11 +286,12 @@ evaluate_addition:
 		nwln
 		call print_identation
 		PutStr str_space
-		PutStr string_b
+		PutStr string_a
 		nwln
 		call print_identation
-		PutStr str_add
-		PutStr string_a
+		PutCh '+'
+		PutCh ' '
+		PutStr string_b
 		nwln
 		call print_identation
 		PutStr str_line_operation
@@ -303,14 +304,14 @@ evaluate_addition:
 			mov EDI, token_space
 			call convert_number_bin_str
 			
-			; This print the result
-			call print_identation
-			PutStr str_space
-			PutStr token_space
-			nwln
-			nwln
-			
 		pop EAX
+			
+		; This print the result
+		call print_identation
+		PutStr str_space
+		PutStr token_space
+		nwln
+		nwln
 		
 		; Remove from the result the unnecessary initial bits.
 		mov ESI, token_space
@@ -348,12 +349,34 @@ evaluate_subtraction:
 		sub ECX, EBX
 		; TODO: Check overflow.
 		
+		; This print the procedure
+		nwln
+		call print_identation
+		PutStr str_space
+		PutStr string_a
+		nwln
+		call print_identation
+		PutCh '-'
+		PutCh ' '
+		PutStr string_b
+		nwln
+		call print_identation
+		PutStr str_line_operation
+		nwln
+		
 		; 3. Convert result to binary number string (store it in token_space).
 		push EAX
 			mov EAX, ECX
 			mov EDI, token_space
 			call convert_number_bin_str
 		pop EAX
+			
+		; This print the result
+		call print_identation
+		PutStr str_space
+		PutStr token_space
+		nwln
+		nwln
 	pop EDI
 	pop ESI
 	pop ECX
@@ -390,9 +413,31 @@ evaluate_multiplication:
 		
 		; TODO: Handle negative numbers.
 		
+		; This print the procedure
+		nwln
+		call print_identation
+		PutStr str_space
+		PutStr string_a
+		nwln
+		call print_identation
+		PutCh '*'
+		PutCh ' '
+		PutStr string_b
+		nwln
+		call print_identation
+		PutStr str_line_operation
+		nwln
+		
 		; 3. Convert result to binary number string (store it in token_space).
 		mov EDI, token_space
 		call convert_number_bin_str
+			
+		; This print the result
+		call print_identation
+		PutStr str_space
+		PutStr token_space
+		nwln
+		nwln
 	pop EDI
 	pop ESI
 	pop EDX
@@ -418,6 +463,21 @@ evaluate_division:
 		mov ESI, string_a
 		call convert_bin_str_number
 		
+		; This print the procedure
+		nwln
+		call print_identation
+		PutStr str_space
+		PutStr string_a
+		nwln
+		call print_identation
+		PutCh '/'
+		PutCh ' '
+		PutStr string_b
+		nwln
+		call print_identation
+		PutStr str_line_operation
+		nwln
+		
 		; Now EAX = first operand
 		; Now EBX = second operand
 		
@@ -440,6 +500,13 @@ evaluate_division:
 		; 3. Convert result to binary number string (store it in token_space).
 		mov EDI, token_space
 		call convert_number_bin_str
+			
+		; This print the result
+		call print_identation
+		PutStr str_space
+		PutStr token_space
+		nwln
+		nwln
 		
 		.end:
 	pop EDI
@@ -461,6 +528,17 @@ evaluate_complement:
 		mov ESI, string_a
 		call convert_bin_str_number
 		
+		; This print the procedure
+		nwln
+		call print_identation
+		PutCh '~'
+		PutCh ' '
+		PutStr string_a
+		nwln
+		call print_identation
+		PutStr str_line_operation
+		nwln
+		
 		; Now EAX = first operand
 		
 		; 2. Invert number.
@@ -472,6 +550,13 @@ evaluate_complement:
 		; 4. Convert result to binary number string (store it in token_space).
 		mov EDI, token_space
 		call convert_number_bin_str
+			
+		; This print the result
+		call print_identation
+		PutStr str_space
+		PutStr token_space
+		nwln
+		nwln
 	pop EAX
 	pop EDI
 	pop ESI
