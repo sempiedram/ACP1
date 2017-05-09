@@ -204,6 +204,7 @@ evaluate_postfix:
 evaluate_operation:
 	push AX
 	push BX
+	push ESI
 		; AL = operation character
 		mov AL, byte [token_space]
 		
@@ -248,6 +249,10 @@ evaluate_operation:
 		.not_complement:
 		
 		.end:
+		
+		mov ESI, token_space
+		call remove_unnecessary_bits
+	pop ESI
 	pop BX
 	pop AX
 	ret
@@ -277,12 +282,39 @@ evaluate_addition:
 		mov ECX, EAX
 		add ECX, EBX
 		
+		; This print the procedure
+		nwln
+		call print_identation
+		PutStr str_space
+		PutStr string_b
+		nwln
+		call print_identation
+		PutStr str_add
+		PutStr string_a
+		nwln
+		call print_identation
+		PutStr str_line_operation
+		nwln
+		
+		
 		; 3. Convert result to binary number string (store it in token_space).
 		push EAX
 			mov EAX, ECX
 			mov EDI, token_space
 			call convert_number_bin_str
+			
+			; This print the result
+			call print_identation
+			PutStr str_space
+			PutStr token_space
+			nwln
+			nwln
+			
 		pop EAX
+		
+		; Remove from the result the unnecessary initial bits.
+		mov ESI, token_space
+		call remove_unnecessary_bits
 	pop EDI
 	pop ESI
 	pop ECX
