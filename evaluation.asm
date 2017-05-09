@@ -277,11 +277,34 @@ evaluate_addition:
 		mov ECX, EAX
 		add ECX, EBX
 		
+		; This print the procedure
+		nwln
+		call print_identation
+		PutStr str_space
+		PutStr string_b
+		nwln
+		call print_identation
+		PutStr str_add
+		PutStr string_a
+		nwln
+		call print_identation
+		PutStr str_line_operation
+		nwln
+		
+		
 		; 3. Convert result to binary number string (store it in token_space).
 		push EAX
 			mov EAX, ECX
 			mov EDI, token_space
 			call convert_number_bin_str
+			
+			; This print the result
+			call print_identation
+			PutStr str_space
+			PutStr token_space
+			nwln
+			nwln
+			
 		pop EAX
 	pop EDI
 	pop ESI
