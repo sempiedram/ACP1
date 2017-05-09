@@ -172,6 +172,13 @@
 
 		; To show the final result of the evaluation:
 		str_final_result db "Final result: '", 0
+
+		; Strings for showing the process and results of conversions:
+			str_result_of_conversion db "Result of conversion: ", 0
+			str_converting_number_base1 db "Converting number: ", 0
+			str_converting_number_base2 db "To base: ", 0
+			str_division_separator db " / ", 0
+			str_remainder db "Remainder: ", 0
 		
 		; For printing all variables.
 		str_defined_variables db "These are the defined variables:", 0
