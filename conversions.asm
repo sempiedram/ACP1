@@ -140,6 +140,11 @@ token_bin_bin:
 ; a valid octal number, into a binary string number.
 ; The result is stored in string_a.
 token_oct_bin:
+	nwln
+	call print_identation
+	PutStr str_converting_number_base1
+	PutStr token_space
+	nwln
 	push ESI
 	push EDI
 		
@@ -159,6 +164,17 @@ token_oct_bin:
 			
 			call expand_oct_digit
 			
+			; This print the procedure
+			call print_identation
+			PutStr str_converting_number_base3
+			PutCh byte [ESI]
+			nwln
+			call print_identation
+			PutStr str_converting_number_base4
+			PutStr string_a
+			nwln
+			
+			
 			inc ESI
 			jmp .cycle
 			
@@ -166,6 +182,14 @@ token_oct_bin:
 			; Put "bin" at the end of string_a
 			mov ESI, binary_base_identifier
 			call clone_string_into_update_edi
+			
+			; This print the result
+			call print_identation
+			PutStr str_result_of_conversion
+			PutStr string_a
+			;PutStr binary_base_identifier
+			nwln
+			nwln
 	pop EDI
 	pop ESI
 	ret
@@ -190,6 +214,12 @@ token_dec_bin:
 ; a valid hexadecimal number, into a binary string number.
 ; The result is stored in string_a.
 token_hex_bin:
+	nwln
+	call print_identation
+	PutStr str_converting_number_base1
+	PutStr token_space
+	nwln
+	
 	push ESI
 	push EDI
 		; Write the bits to string_a
@@ -208,6 +238,16 @@ token_hex_bin:
 			
 			call expand_hex_digit
 			
+			; This print the precedure
+			call print_identation
+			PutStr str_converting_number_base3
+			PutCh byte [ESI]
+			nwln
+			call print_identation
+			PutStr str_converting_number_base4
+			PutStr string_a
+			nwln
+			
 			inc ESI
 			jmp .cycle
 			
@@ -215,6 +255,14 @@ token_hex_bin:
 			; Put "bin" at the end of string_a
 			mov ESI, binary_base_identifier
 			call clone_string_into_update_edi
+			
+			; This print the result
+			call print_identation
+			PutStr str_result_of_conversion
+			PutStr string_a
+			nwln
+			nwln
+			
 	pop EDI
 	pop ESI
 	ret

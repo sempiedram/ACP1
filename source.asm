@@ -179,6 +179,8 @@
 			str_converting_number_base2 db "To base: ", 0
 			str_division_separator db " / ", 0
 			str_remainder db "Remainder: ", 0
+			str_converting_number_base3	db	"Expanding: ", 0
+			str_converting_number_base4	db	"Partial result: ", 0
 		
 		; For printing all variables.
 		str_defined_variables db "These are the defined variables:", 0
