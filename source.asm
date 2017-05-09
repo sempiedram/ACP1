@@ -180,9 +180,17 @@
 			str_converting_number_base2 db "To base: ", 0
 			str_division_separator db " / ", 0
 			str_remainder db "Remainder: ", 0
+			
 			str_partial_result db "Partial result: ", 0
 			str_multiplier db "Multiplier: ", 0
 			str_bit_value db "Bit value: ", 0
+			
+			str_converting_number_base3	db	"Expanding: ", 0
+			str_converting_number_base4	db	"Partial result: ", 0
+			
+		str_line_operation db "--------------------------------------", 0
+		str_space db "  ", 0
+		str_add db "+ ", 0
 		
 		; For printing all variables.
 		str_defined_variables db "These are the defined variables:", 0

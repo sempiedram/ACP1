@@ -26,6 +26,7 @@ process_arithmetic:
 		
 		; Print the resulting expression after arithmetic_preprocessing.
 		
+		nwln
 		call print_identation
 		PutStr str_arithmetic_preprocessing_result
 		PutStr user_input
@@ -47,6 +48,7 @@ process_arithmetic:
 		.no_error_4:
 		
 		; Print the result base:
+		nwln
 		call print_identation
 		PutStr str_found_result_base
 		call print_result_base_name
@@ -62,6 +64,7 @@ process_arithmetic:
 		; Print the resulting expression, with valid numbers
 		; converted into binary.
 
+		nwln
 		call print_identation
 		PutStr str_numbers_converted
 		PutStr user_input
@@ -80,6 +83,7 @@ process_arithmetic:
 		
 		; Print the resulting postfix expression.
 		
+		nwln
 		call print_identation
 		PutStr str_postfix_result
 		PutStr expression_space
@@ -103,6 +107,7 @@ process_arithmetic:
 		
 		; Print the result of evaluation.
 		
+		nwln
 		call print_identation
 		PutStr str_evaluation_result
 		PutStr string_a
@@ -113,6 +118,7 @@ process_arithmetic:
 	
 		call convert_final_result
 
+		nwln
 		call print_identation
 		PutStr str_final_result
 		PutStr string_b
