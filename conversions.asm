@@ -63,6 +63,248 @@ convert_numbers_to_binary:
 	ret
 
 
+; Converts token_space's string to binary.
+; Assumes that token_space is a valid number.
+; Result: string_a, number converted to binary
+convert_token_to_binary:
+	push ESI
+	push EDI
+	push EAX
+		mov ESI, token_space
+		call find_next_zero_esi
+		dec ESI
+		dec ESI
+		dec ESI ; ESI = start of token's base.
+		
+		call get_base_from_string
+		; AL is now 2, 8, 10, or 16
+		
+		mov byte [ESI], 0 ; Cut token's base
+		
+		cmp AL, 2
+		jne .not_binary
+			call token_bin_bin
+			jmp .end
+		.not_binary:
+		
+		cmp AL, 8
+		jne .not_octal
+			call token_oct_bin
+			jmp .end
+		.not_octal:
+		
+		cmp AL, 10
+		jne .not_decimal
+			call token_dec_bin
+			jmp .end
+		.not_decimal:
+		
+		cmp AL, 16
+		jne .not_hexadecimal
+			call token_hex_bin
+			jmp .end
+		.not_hexadecimal:
+		
+		; It's not a valid base.
+		; TODO: decide if an error should be raised here.
+		
+		.end:
+		
+	pop EAX
+	pop EDI
+	pop ESI
+	ret
+
+
+
+; This method converts the string at token_space into binary.
+; The result is stored in string_a.
+token_bin_bin:
+	push ESI
+	push EDI
+		; Just copy the token
+		mov ESI, token_space
+		mov EDI, string_a
+		call clone_string_into_update_edi
+		
+		; Add "bin" to the result
+		mov ESI, binary_base_identifier
+		call clone_string_into_update_edi
+	pop EDI
+	pop ESI
+	ret
+
+
+
+; This method converts the string at token_space which should be
+; a valid octal number, into a binary string number.
+; The result is stored in string_a.
+token_oct_bin:
+	push ESI
+	push EDI
+		
+		; Write the bits to string_a
+		mov EDI, string_a
+		
+		; Write first zero:
+		mov byte [EDI], OFF_BIT_CHAR
+		inc EDI
+	
+		; Expand every character in token_space as being a hex digit
+		mov ESI, token_space
+		
+		.cycle:
+			cmp byte [ESI], 0
+			je .done
+			
+			call expand_oct_digit
+			
+			inc ESI
+			jmp .cycle
+			
+		.done:
+			; Put "bin" at the end of string_a
+			mov ESI, binary_base_identifier
+			call clone_string_into_update_edi
+	pop EDI
+	pop ESI
+	ret
+
+
+
+; This method converts the string at token_space into binary.
+; The result is stored in string_a.
+token_dec_bin:
+	push EAX
+		; 1. Convert token_space to a number
+		call convert_dec_number
+		
+		; 2. Convert number to binary
+		call convert_number_bin
+	pop EAX
+	ret
+
+
+
+; This method converts the string at token_space which should be
+; a valid hexadecimal number, into a binary string number.
+; The result is stored in string_a.
+token_hex_bin:
+	push ESI
+	push EDI
+		; Write the bits to string_a
+		mov EDI, string_a
+		
+		; Write first zero:
+		mov byte [EDI], OFF_BIT_CHAR
+		inc EDI
+	
+		; Expand every character in token_space as being a hex digit
+		mov ESI, token_space
+		
+		.cycle:
+			cmp byte [ESI], 0
+			je .done
+			
+			call expand_hex_digit
+			
+			inc ESI
+			jmp .cycle
+			
+		.done:
+			; Put "bin" at the end of string_a
+			mov ESI, binary_base_identifier
+			call clone_string_into_update_edi
+	pop EDI
+	pop ESI
+	ret
+
+
+
+; This method expands the character pointed at by ESI which should be
+; a valid octal digit into it's binary equivalent.
+; It modifies EDI to point to the byte after the last bit that was written.
+expand_oct_digit:
+	push AX
+		mov AL, byte [ESI]
+		
+		cmp AL, '0'
+		jae .above_zero
+		jmp .below_zero
+		
+		.above_zero:
+			cmp AL, '7'
+			jbe .under_seven
+			jmp .above_seven
+		
+		.under_seven:
+			; It's one of "01234567"
+			sub AL, '0'
+			call write_last_three_bits
+			jmp .end
+	
+		.below_zero:
+		.above_seven:
+			; It's not a valid oct digit
+			; Ignore it.
+		
+		.end:
+	pop AX
+	ret
+
+
+
+; This method expands the character pointed at by ESI which should be
+; a valid hexadecimal number into it's binary equivalent.
+; It modifies EDI to point to the byte after the last bit that was written.
+expand_hex_digit:
+	push AX
+		mov AL, byte [ESI]
+		
+		cmp AL, '0'
+		jae .above_zero
+		jmp .below_zero
+		
+		.above_zero:
+			cmp AL, '9'
+			jbe .under_nine
+			
+			; It's over 9
+			
+			cmp AL, 'A'
+			jae .above_a
+			jmp .below_a
+			
+		.above_a:
+			cmp AL, 'F'
+			jbe .under_f
+			jmp .above_f
+		
+		.under_f:
+			; It's one of "ABCDEF"
+			sub AL, 'A'
+			add AL, 10 ; Make up for the subtraction of 'A'
+			call write_last_four_bits
+			jmp .end
+		
+		.under_nine:
+			; It's one of "0123456789"
+			sub AL, '0'
+			call write_last_four_bits
+			jmp .end
+	
+		.below_zero:
+		.above_f:
+		.below_a:
+			; It's not a valid hex digit
+			; Ignore it.
+			jmp .end
+		
+		.end:
+	pop AX
+	ret
+
+
 
 ; This method converts the final result, which should be stored in string_a,
 ; from a binary string into the base that the user specified, which should be stored
@@ -353,59 +595,6 @@ number_to_digit:
 	ret
 
 
-; Converts token_space's string to binary.
-; Assumes that token_space is a valid number.
-; Result: string_a, number converted to binary
-convert_token_to_binary:
-	push ESI
-	push EDI
-	push EAX
-		mov ESI, token_space
-		call find_next_zero_esi
-		dec ESI
-		dec ESI
-		dec ESI ; ESI = start of token's base.
-		
-		call get_base_from_string
-		; AL is now 2, 8, 10, or 16
-		
-		mov byte [ESI], 0 ; Cut token's base
-		
-		cmp AL, 2
-		jne .not_binary
-			call token_bin_bin
-			jmp .end
-		.not_binary:
-		
-		cmp AL, 8
-		jne .not_octal
-			call token_oct_bin
-			jmp .end
-		.not_octal:
-		
-		cmp AL, 10
-		jne .not_decimal
-			call token_dec_bin
-			jmp .end
-		.not_decimal:
-		
-		cmp AL, 16
-		jne .not_hexadecimal
-			call token_hex_bin
-			jmp .end
-		.not_hexadecimal:
-		
-		; It's not a valid base.
-		; TODO: decide if an error should be raised here.
-		
-		.end:
-		
-	pop EAX
-	pop EDI
-	pop ESI
-	ret
-
-
 
 ; This method converts the number in EAX to a binary number string in string_a.
 convert_number_bin:
@@ -471,195 +660,6 @@ convert_dec_number:
 	pop EDX
 	pop EBX
 	pop ESI
-	ret
-
-
-
-; This method converts the string at token_space into binary.
-; The result is stored in string_a.
-token_bin_bin:
-	push ESI
-	push EDI
-		; Just copy the token
-		mov ESI, token_space
-		mov EDI, string_a
-		call clone_string_into_update_edi
-		
-		; Add "bin" to the result
-		mov ESI, binary_base_identifier
-		call clone_string_into_update_edi
-	pop EDI
-	pop ESI
-	ret
-
-
-
-; This method converts the string at token_space which should be
-; a valid octal number, into a binary string number.
-; The result is stored in string_a.
-token_oct_bin:
-	push ESI
-	push EDI
-		
-		; Write the bits to string_a
-		mov EDI, string_a
-		
-		; Write first zero:
-		mov byte [EDI], OFF_BIT_CHAR
-		inc EDI
-	
-		; Expand every character in token_space as being a hex digit
-		mov ESI, token_space
-		
-		.cycle:
-			cmp byte [ESI], 0
-			je .done
-			
-			call expand_oct_digit
-			
-			inc ESI
-			jmp .cycle
-			
-		.done:
-			; Put "bin" at the end of string_a
-			mov ESI, binary_base_identifier
-			call clone_string_into_update_edi
-	pop EDI
-	pop ESI
-	ret
-
-
-
-; This method converts the string at token_space into binary.
-; The result is stored in string_a.
-token_dec_bin:
-	push EAX
-		; 1. Convert token_space to a number
-		call convert_dec_number
-		
-		; 2. Convert number to binary
-		call convert_number_bin
-	pop EAX
-	ret
-
-
-
-; This method converts the string at token_space which should be
-; a valid hexadecimal number, into a binary string number.
-; The result is stored in string_a.
-token_hex_bin:
-	push ESI
-	push EDI
-		; Write the bits to string_a
-		mov EDI, string_a
-		
-		; Write first zero:
-		mov byte [EDI], OFF_BIT_CHAR
-		inc EDI
-	
-		; Expand every character in token_space as being a hex digit
-		mov ESI, token_space
-		
-		.cycle:
-			cmp byte [ESI], 0
-			je .done
-			
-			call expand_hex_digit
-			
-			inc ESI
-			jmp .cycle
-			
-		.done:
-			; Put "bin" at the end of string_a
-			mov ESI, binary_base_identifier
-			call clone_string_into_update_edi
-	pop EDI
-	pop ESI
-	ret
-
-
-
-; This method expands the character pointed at by ESI which should be
-; a valid octal digit into it's binary equivalent.
-; It modifies EDI to point to the byte after the last bit that was written.
-expand_oct_digit:
-	push AX
-		mov AL, byte [ESI]
-		
-		cmp AL, '0'
-		jae .above_zero
-		jmp .below_zero
-		
-		.above_zero:
-			cmp AL, '7'
-			jbe .under_seven
-			jmp .above_seven
-		
-		.under_seven:
-			; It's one of "01234567"
-			sub AL, '0'
-			call write_last_three_bits
-			jmp .end
-	
-		.below_zero:
-		.above_seven:
-			; It's not a valid oct digit
-			; Ignore it.
-		
-		.end:
-	pop AX
-	ret
-
-
-
-; This method expands the character pointed at by ESI which should be
-; a valid hexadecimal number into it's binary equivalent.
-; It modifies EDI to point to the byte after the last bit that was written.
-expand_hex_digit:
-	push AX
-		mov AL, byte [ESI]
-		
-		cmp AL, '0'
-		jae .above_zero
-		jmp .below_zero
-		
-		.above_zero:
-			cmp AL, '9'
-			jbe .under_nine
-			
-			; It's over 9
-			
-			cmp AL, 'A'
-			jae .above_a
-			jmp .below_a
-			
-		.above_a:
-			cmp AL, 'F'
-			jbe .under_f
-			jmp .above_f
-		
-		.under_f:
-			; It's one of "ABCDEF"
-			sub AL, 'A'
-			add AL, 10 ; Make up for the subtraction of 'A'
-			call write_last_four_bits
-			jmp .end
-		
-		.under_nine:
-			; It's one of "0123456789"
-			sub AL, '0'
-			call write_last_four_bits
-			jmp .end
-	
-		.below_zero:
-		.above_f:
-		.below_a:
-			; It's not a valid hex digit
-			; Ignore it.
-			jmp .end
-		
-		.end:
-	pop AX
 	ret
 
 
