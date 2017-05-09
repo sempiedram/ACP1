@@ -204,6 +204,7 @@ evaluate_postfix:
 evaluate_operation:
 	push AX
 	push BX
+	push ESI
 		; AL = operation character
 		mov AL, byte [token_space]
 		
@@ -248,6 +249,10 @@ evaluate_operation:
 		.not_complement:
 		
 		.end:
+		
+		mov ESI, token_space
+		call remove_unnecessary_bits
+	pop ESI
 	pop BX
 	pop AX
 	ret
@@ -283,6 +288,10 @@ evaluate_addition:
 			mov EDI, token_space
 			call convert_number_bin_str
 		pop EAX
+		
+		; Remove from the result the unnecessary initial bits.
+		mov ESI, token_space
+		call remove_unnecessary_bits
 	pop EDI
 	pop ESI
 	pop ECX

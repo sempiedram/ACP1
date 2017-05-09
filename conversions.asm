@@ -110,6 +110,8 @@ convert_token_to_binary:
 		
 		.end:
 		
+		mov ESI, string_a
+		call remove_unnecessary_bits
 	pop EAX
 	pop EDI
 	pop ESI
@@ -130,6 +132,9 @@ token_bin_bin:
 		; Add "bin" to the result
 		mov ESI, binary_base_identifier
 		call clone_string_into_update_edi
+		
+		mov ESI, string_a
+		call remove_unnecessary_bits
 	pop EDI
 	pop ESI
 	ret
@@ -163,9 +168,13 @@ token_oct_bin:
 			jmp .cycle
 			
 		.done:
+			
 			; Put "bin" at the end of string_a
 			mov ESI, binary_base_identifier
 			call clone_string_into_update_edi
+		
+			mov ESI, string_a
+			call remove_unnecessary_bits
 	pop EDI
 	pop ESI
 	ret
@@ -176,11 +185,16 @@ token_oct_bin:
 ; The result is stored in string_a.
 token_dec_bin:
 	push EAX
+	push ESI
 		; 1. Convert token_space to a number
 		call convert_dec_number
 		
 		; 2. Convert number to binary
 		call convert_number_bin
+		
+		mov ESI, string_a
+		call remove_unnecessary_bits
+	pop ESI
 	pop EAX
 	ret
 
@@ -215,6 +229,9 @@ token_hex_bin:
 			; Put "bin" at the end of string_a
 			mov ESI, binary_base_identifier
 			call clone_string_into_update_edi
+			
+			mov ESI, string_a
+			call remove_unnecessary_bits
 	pop EDI
 	pop ESI
 	ret
@@ -388,6 +405,14 @@ string_a_bin_oct:
 		mov ESI, string_a
 		call convert_bin_str_number
 		; Now EAX = value of number
+		
+		mov BH, 0 ; Was negative = false
+		
+		cmp EAX, 0
+		jge .not_negative
+			mov BH, 1 ; Save that the original was negative
+			neg EAX ; Negate the number
+		.not_negative:
 
 		; 2. Convert number to base (string)
 		mov BL, 8 ; base to convert to 
@@ -397,6 +422,14 @@ string_a_bin_oct:
 		; 3. Add "oct" base identifier
 		mov ESI, octal_base_identifier
 		call clone_string_into
+		
+		test BH, BH
+		jz .was_not_negative
+			; Move the string one to the right
+			mov ESI, string_b
+			call shift_string_right
+			mov byte [ESI], '-' ; Write that it was negative
+		.was_not_negative:
 		
 	pop EDI
 	pop BX
@@ -418,6 +451,14 @@ string_a_bin_dec:
 		mov ESI, string_a
 		call convert_bin_str_number
 		; Now EAX = value of number
+		
+		mov BH, 0 ; Was negative = false
+		
+		cmp EAX, 0
+		jge .not_negative
+			mov BH, 1 ; Save that the original was negative
+			neg EAX ; Negate the number
+		.not_negative:
 
 		; 2. Convert number to base (string)
 		mov BL, 10 ; base to convert to 
@@ -428,9 +469,54 @@ string_a_bin_dec:
 		mov ESI, decimal_base_identifier
 		call clone_string_into
 		
+		test BH, BH
+		jz .was_not_negative
+			; Move the string one to the right
+			mov ESI, string_b
+			call shift_string_right
+			mov byte [ESI], '-' ; Write that it was negative
+		.was_not_negative:
+		
 	pop EDI
 	pop BX
 	pop EAX
+	pop ESI
+	ret
+
+
+; Shifts all characters in string at ESI one to the right.
+shift_string_right:
+	push ESI
+	push EDI
+	push EBX
+		mov EBX, ESI ; Save ESI
+		
+		; move to the end:
+		call find_next_zero_esi
+		
+		mov EDI, ESI ; end
+		dec EDI ; end - 1
+		
+		inc ESI ; end + 1
+		mov byte [ESI], 0 ; Write end of string.
+		dec ESI ; end
+		
+		.cycle:
+			; Stop at original ESI.
+			cmp EDI, EBX
+			jb .done_copying
+			
+			; Move current byte.
+			mov AL, byte [EDI]
+			mov byte [ESI], AL
+			
+			dec ESI
+			dec EDI
+			jmp .cycle
+			
+		.done_copying:
+	pop EBX
+	pop EDI
 	pop ESI
 	ret
 
@@ -448,6 +534,14 @@ string_a_bin_hex:
 		mov ESI, string_a
 		call convert_bin_str_number
 		; Now EAX = value of number
+		
+		mov BH, 0 ; Was negative = false
+		
+		cmp EAX, 0
+		jge .not_negative
+			mov BH, 1 ; Save that the original was negative
+			neg EAX ; Negate the number
+		.not_negative:
 
 		; 2. Convert number to base (string)
 		mov BL, 16 ; base to convert to 
@@ -457,6 +551,14 @@ string_a_bin_hex:
 		; 3. Add "hex" base identifier
 		mov ESI, hexadecimal_base_identifier
 		call clone_string_into
+		
+		test BH, BH
+		jz .was_not_negative
+			; Move the string one to the right
+			mov ESI, string_b
+			call shift_string_right
+			mov byte [ESI], '-' ; Write that it was negative
+		.was_not_negative:
 		
 	pop EDI
 	pop BX
@@ -608,15 +710,6 @@ convert_number_bin:
 		; Write the "bin" part of the result.
 		mov ESI, binary_base_identifier
 		call clone_string_into
-		
-		; Print result of the conversion:
-		; <identation>Result of conversion: <string_a>
-		call increase_identation_level
-			call print_identation
-			PutStr str_result_of_conversion
-			PutStr string_a
-		call decrease_identation_level
-		nwln
 	pop BX
 	pop ESI
 	pop EDI
@@ -852,13 +945,66 @@ is_valid_digit:
 	ret
 
 
+; Removes the initial repeated characters (unless the number only has 2 bits).
+; Receives the string in ESI
+remove_unnecessary_bits:
+	push ESI
+	push EDI
+	push EAX
+		; Scan from ESI repeated digits
+		mov EDI, ESI
+		
+		; initial digit:
+		mov AL, byte [ESI]
+		
+		; Scan characters:
+		.cycle:
+			; Stop at first non-bit
+			cmp byte [EDI], ON_BIT_CHAR
+			je .bit
+			
+				cmp byte [EDI], OFF_BIT_CHAR
+				jne .not_bit
+			
+			.bit:
+			
+			; It's a bit.
+			
+			cmp AL, byte [EDI]
+			jne .not_equal
+			
+			inc EDI
+			jmp .cycle
+		
+		.not_equal:
+		.not_bit:
+			dec EDI ; Ignore the first non equal
+			
+			; Switch ESI and EDI:
+			push EDI ; Save EDI
+				mov EDI, ESI ; Move ESI into EDI
+			pop ESI ; Move old EDI into ESI
+			
+			; Move the string backward.
+			call clone_string_into
+	pop EAX
+	pop EDI
+	pop ESI
+	ret
+
+
 
 ; Converts the string at ESI (assuming that it's a binary number, e.g: 1101bin, 0110bin) into a number.
 ; The result is returned in EAX.
 convert_bin_str_number:
-	push ESI
 	push EBX
 	push ECX
+	push EDX
+	push ESI
+	push EDI
+		
+		call remove_unnecessary_bits
+		
 		push ESI
 			; Remove "bin" from number.
 			call find_next_zero_esi
@@ -868,68 +1014,112 @@ convert_bin_str_number:
 			mov byte [ESI], 0
 		pop ESI
 		
-		; Keep count of number of bits in CX.
-		; CX = 0
-		xor CX, CX
+		; Print: Converting: <binary number>
+		call print_identation
+		PutStr str_converting_binary_number
+		PutStr ESI
+		nwln
 		
-		; Result = EAX = 0
-		xor EAX, EAX
+		cmp byte [ESI], 0
+		; do nothing if there's no string
+		je .no_string
 		
-		cmp byte [ESI], OFF_BIT_CHAR
-		je .first_was_zero
-			; First bit was one
-			not EAX ; Invert all bits initially
-		.first_was_zero:
+		; Save original start:
+		mov EDI, ESI ; EDI = original ESI
 		
-		; Scan the token:
+		; multiplier = 1
+		mov ECX, 1 ; ECX is the multiplier
+		
+		; result = 0
+		mov EAX, 0 ; EAX is the result
+		
+		xor EDX, EDX ; EDX = 0 for multiplications
+		
+		; starting at the last bit,
+		call find_next_zero_esi
+		dec ESI
+		
+		; for every bit {
 		.cycle:
-			; Get next character
-			mov BL, byte [ESI]
+		; Stop if reached below the first bit:
+		cmp ESI, EDI
+		jb .end_cycle
 			
-			; Check end of token:
-			cmp BL, 0
-			je .bits_done
+			call increase_identation_level
 			
-			; Check if it's a bit:
-			cmp BL, OFF_BIT_CHAR
-			jne .not_zero
-				; Is zero
-				inc CX ; Increase count
+			; if first bit {
+			cmp ESI, EDI
+			jne .not_first
+			
+				; multiplier *= -1
+				push EAX
+					mov EAX, -1 ; EAX = -1
+					mul ECX ; EAX = -1 * multiplier
+					mov ECX, EAX ; multiplier = -1 * multiplier
+				pop EAX
 				
-				rol EAX, 1 ; Write a 0
-				and EAX, 0xFFFFFFFE ; Mask last bit off
-				jmp .next_character
-			.not_zero:
+			; }
+			.not_first:
 			
-			cmp BL, ON_BIT_CHAR
+			; Print: Multiplier: <x>
+			call print_identation
+			PutStr str_multiplier
+			PutLInt ECX
+			nwln
+		
+			; EBX will hold the "to add" variable
+			
+			; to add = multiplier * bit
+			xor EBX, EBX ; EBX = 0
+			cmp byte [ESI], ON_BIT_CHAR
 			jne .not_one
-				; Is one
-				inc CX ; Increase count
-				
-				; Write a 1 :
-				rol EAX, 1
-				or EAX, 1 ; Mask last bit on
-				jmp .next_character
+				; It's one
+				mov EBX, ECX
 			.not_one:
 			
-			; It's not recognized.
+			; Print bit value: <x>
+			call print_identation
+			PutStr str_bit_value
+			PutLInt EBX
+			nwln
 			
-			.next_character:
-			inc ESI
+			; result = result + to add
+			add EAX, EBX
 			
-			cmp CX, 32
-			ja .too_many_bits
+			; Print: Partial result: <partial>
+			call print_identation
+			PutStr str_partial_result
+			PutLInt EAX
+			nwln
 			
+			; multiplier *= 2
+			push EAX ; Save EAX
+				mov EAX, 2 ; EAX = 2
+				mul ECX ; EAX = 2 * multiplier
+				mov ECX, EAX ; multiplier = 2 * multiplier
+			pop EAX ; Restore EAX
+			
+			call decrease_identation_level
+			
+			; Go to next bit:
+			dec ESI
 			jmp .cycle
-			
-		.too_many_bits:
-			; TODO: Handle when there are too many bits.
-		.bits_done:
-			; call find_next_zero_esi ; Restore the b of bin
-			; mov byte [ESI], 'b'
+		; }
+		.end_cycle:
+		
+		
+		call print_identation
+		PutStr str_result_of_conversion
+		PutLInt EAX
+		nwln
+		nwln
+		
+		.no_string:
+	pop EDI
+	pop ESI
+	pop EDX
 	pop ECX
 	pop EBX
-	pop ESI
 	ret
 
 
@@ -970,6 +1160,9 @@ convert_number_bin_str:
 		
 	pop ECX
 	pop ESI
+	
+	; Remove from the result the unnecessary initial bits.
+	call remove_unnecessary_bits
 	ret
 
 
