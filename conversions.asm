@@ -105,6 +105,15 @@ convert_final_result:
 		call clone_string_into
 
 		.end:
+			; Print result of the conversion:
+			; <identation>Result of conversion: <string_b>
+			call increase_identation_level
+				call print_identation
+				PutStr str_result_of_conversion
+				PutStr string_b
+			call decrease_identation_level
+			nwln
+			nwln
 	pop AX
 	ret
 
@@ -146,7 +155,7 @@ string_a_bin_oct:
 		; 3. Add "oct" base identifier
 		mov ESI, octal_base_identifier
 		call clone_string_into
-		.not_binary:
+		
 	pop EDI
 	pop BX
 	pop EAX
@@ -176,7 +185,7 @@ string_a_bin_dec:
 		; 3. Add "dec" base identifier
 		mov ESI, decimal_base_identifier
 		call clone_string_into
-		.not_binary:
+		
 	pop EDI
 	pop BX
 	pop EAX
@@ -206,7 +215,7 @@ string_a_bin_hex:
 		; 3. Add "hex" base identifier
 		mov ESI, hexadecimal_base_identifier
 		call clone_string_into
-		.not_binary:
+		
 	pop EDI
 	pop BX
 	pop EAX
@@ -229,6 +238,27 @@ convert_number_to_base:
 		; After each division, convert the remainder to the
 		;   correct digit.
 		; Add each digit to the result.
+		
+		; For division, EBX must contain only the base:
+		xor EDX, EDX ; EDX = 0
+		mov DL, BL ; EDX = base
+		mov EBX, EDX ; EBX = base
+
+		; Show what we are doing:
+		call increase_identation_level
+		nwln
+		
+		; Print Converting number: <number>
+		call print_identation
+		PutStr str_converting_number_base1 ; Converting number:
+		PutLInt EAX ; <number>
+		nwln
+
+		; Print To base: <base>
+		call print_identation
+		PutStr str_converting_number_base2 ; To base: 
+		PutLInt EBX ; <base>
+		nwln
 
 		mov byte [EDI], '0' ; Add an initial 0 to the result.
 		inc EDI
@@ -236,22 +266,34 @@ convert_number_to_base:
 		; Save EDI for reversing the digits:
 		mov ECX, EDI
 
-		; For division, EBX must contain only the base:
-		xor EDX, EDX ; EDX = 0
-		mov DL, BL ; EDX = base
-		mov EBX, EDX ; EBX = base
+		; Increase identation for divide cycle
+		call increase_identation_level
 
 		.cycle:
 			; To divide, EDX must be clear:
 			xor EDX, EDX ; EDX = 0
+
+			; Print <quotient>/<base>
+			call print_identation
+			PutLInt EAX ; <quotient>
+			PutStr str_division_separator ; / 
+			PutLInt EBX ; <base>
+			nwln
 			
-			div EBX
+			div EBX ; Divides EDX:EAX by EBX (EAX by EBX, quotient by base)
 
 			; Now EAX = Quotient
 			; And EDX = Remainder (= DL)
 
 			; Write the digit:
 			call number_to_digit ; Converts number -> digit (in DL)
+
+			; Print Remainder: <digit>
+			call print_identation
+			PutStr str_remainder
+			PutCh DL ; Print digit (DL)
+			nwln
+
 			; Now DL = new digit
 			mov byte [EDI], DL
 			inc EDI
@@ -264,6 +306,12 @@ convert_number_to_base:
 
 		.quotient_zero:
 			; Now EAX is zero -> conversion ended.
+
+			; Decrease identation level of division cycle
+			call decrease_identation_level
+
+			; Decrease identation level of this method
+			call decrease_identation_level
 			
 			; Close the current result string.
 			mov byte [EDI], 0
@@ -351,23 +399,10 @@ convert_token_to_binary:
 		; TODO: decide if an error should be raised here.
 		
 		.end:
+		
 	pop EAX
 	pop EDI
 	pop ESI
-	ret
-
-
-
-; This method converts the string at token_space into binary.
-; The result is stored in string_a.
-token_dec_bin:
-	push EAX
-		; 1. Convert token_space to a number
-		call convert_dec_number
-		
-		; 2. Convert number to binary
-		call convert_number_bin
-	pop EAX
 	ret
 
 
@@ -384,6 +419,15 @@ convert_number_bin:
 		; Write the "bin" part of the result.
 		mov ESI, binary_base_identifier
 		call clone_string_into
+		
+		; Print result of the conversion:
+		; <identation>Result of conversion: <string_a>
+		call increase_identation_level
+			call print_identation
+			PutStr str_result_of_conversion
+			PutStr string_a
+		call decrease_identation_level
+		nwln
 	pop BX
 	pop ESI
 	pop EDI
@@ -451,41 +495,6 @@ token_bin_bin:
 
 
 ; This method converts the string at token_space which should be
-; a valid hexadecimal number, into a binary string number.
-; The result is stored in string_a.
-token_hex_bin:
-	push ESI
-	push EDI
-		; Write the bits to string_a
-		mov EDI, string_a
-		
-		; Write first zero:
-		mov byte [EDI], OFF_BIT_CHAR
-		inc EDI
-	
-		; Expand every character in token_space as being a hex digit
-		mov ESI, token_space
-		
-		.cycle:
-			cmp byte [ESI], 0
-			je .done
-			
-			call expand_hex_digit
-			
-			inc ESI
-			jmp .cycle
-			
-		.done:
-			; Put "bin" at the end of string_a
-			mov ESI, binary_base_identifier
-			call clone_string_into_update_edi
-	pop EDI
-	pop ESI
-	ret
-
-
-
-; This method converts the string at token_space which should be
 ; a valid octal number, into a binary string number.
 ; The result is stored in string_a.
 token_oct_bin:
@@ -507,6 +516,55 @@ token_oct_bin:
 			je .done
 			
 			call expand_oct_digit
+			
+			inc ESI
+			jmp .cycle
+			
+		.done:
+			; Put "bin" at the end of string_a
+			mov ESI, binary_base_identifier
+			call clone_string_into_update_edi
+	pop EDI
+	pop ESI
+	ret
+
+
+
+; This method converts the string at token_space into binary.
+; The result is stored in string_a.
+token_dec_bin:
+	push EAX
+		; 1. Convert token_space to a number
+		call convert_dec_number
+		
+		; 2. Convert number to binary
+		call convert_number_bin
+	pop EAX
+	ret
+
+
+
+; This method converts the string at token_space which should be
+; a valid hexadecimal number, into a binary string number.
+; The result is stored in string_a.
+token_hex_bin:
+	push ESI
+	push EDI
+		; Write the bits to string_a
+		mov EDI, string_a
+		
+		; Write first zero:
+		mov byte [EDI], OFF_BIT_CHAR
+		inc EDI
+	
+		; Expand every character in token_space as being a hex digit
+		mov ESI, token_space
+		
+		.cycle:
+			cmp byte [ESI], 0
+			je .done
+			
+			call expand_hex_digit
 			
 			inc ESI
 			jmp .cycle
