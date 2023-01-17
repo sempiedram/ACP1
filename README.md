@@ -1,4 +1,6 @@
 
+This is an old university project.
+
 # ACP1 - Arquitectura de Computadores, Proyecto 1
 
 Este es el primer proyecto para el curso Arquitectura de Computadores, primer semestre del 2017, con el profesor Esteban Arias, de la escuela de computación.
@@ -7,7 +9,7 @@ Estudiantes: Kevin S. Piedra M. and Kristin N. Alvarado.
 
 # Analysis
 
-This "analysis" is a guide to help develop this project. A non-complete analysis had already been produced (called analysis.md), but that one used a token data structure that is too hard and it's not very productive. So, instead of using Token data structures, text will be interpreted as needed.
+This "analysis" is a guide to help develop this project. A non-complete analysis had already been produced (called analysis.md), but that one used a token data structure that is too complex and not very productive. So, instead of using Token data structures, text will be interpreted as needed.
 
 ## Newer examples of operation:
 
