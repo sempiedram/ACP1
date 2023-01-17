@@ -5,10 +5,6 @@ Este es el primer proyecto para el curso Arquitectura de Computadores, primer se
 
 Estudiantes: Kevin S. Piedra M. and Kristin N. Alvarado.
 
-# This repository is private
-
-This repository is private, and only us (the students) should have access to it at this time.
-
 # Analysis
 
 This "analysis" is a guide to help develop this project. A non-complete analysis had already been produced (called analysis.md), but that one used a token data structure that is too hard and it's not very productive. So, instead of using Token data structures, text will be interpreted as needed.
